@@ -1,0 +1,102 @@
+/* Tokens · theme: custom (bespoke) · vibe: "night museum of a quant: navy and gold, a marble bust in a ring, Brownian veins"
+ * axes: dark / geometric-sans / warm (gold ~80°) · single dark theme by design
+ * Every colour and font on the site references these names. Add a token here before using a new value.
+ */
+:root {
+  color-scheme: dark;
+
+  /* colour · navy and gold, after the user's "Antique Parian" reference */
+  --color-paper:      oklch(13% 0.032 262);
+  --color-paper-2:    oklch(17.5% 0.045 262);
+  --color-paper-3:    oklch(22% 0.052 261);
+  --color-mist:       oklch(18.5% 0.035 255);
+  --color-prussian:   oklch(25% 0.075 262);
+  --color-ink:        oklch(95% 0.018 85);
+  --color-ink-2:      oklch(83% 0.022 80);
+  --color-muted:      oklch(68% 0.03 75);
+  --color-rule:       oklch(35% 0.04 255);
+  --color-rule-2:     oklch(25% 0.04 258);
+  --color-grid:       oklch(18% 0.045 261);
+  --color-accent:     oklch(80% 0.115 80);
+  --color-accent-2:   oklch(64% 0.1 72);
+  --color-accent-ink: oklch(16% 0.035 262);
+  --color-focus:      oklch(87% 0.13 85);
+  --color-neg:        oklch(71% 0.15 28);
+  --color-chart-dot:  oklch(62% 0.03 80);
+  --color-chart-alt:  oklch(62% 0.045 250);
+  --color-scrim:      oklch(8% 0.03 262 / 0.76);
+  --color-shadow:     oklch(5% 0.02 262 / 0.6);
+
+  /* wallpaper scrims: keep text readable over the photograph */
+  --color-scrim-top:    oklch(12% 0.035 262 / 0.5);
+  --color-scrim-bottom: oklch(10% 0.03 262 / 0.64);
+  --color-scrim-edge:   oklch(7% 0.03 262 / 0.55);
+  --color-scrim-doc:    oklch(11% 0.032 262 / 0.8);
+
+  /* arcane night wallpaper */
+  --color-night:      oklch(9.5% 0.04 268);
+  --color-dusk:       oklch(17% 0.06 262);
+  --color-moon:       oklch(94% 0.035 90);
+  --color-star:       oklch(93% 0.03 90);
+  --color-silhouette: oklch(8% 0.025 262);
+  --color-far-hills:  oklch(14% 0.04 262);
+  --color-lake:       oklch(11% 0.035 260);
+  --color-candle:     oklch(92% 0.035 85);
+  --color-flame:      oklch(86% 0.15 78);
+
+  /* type */
+  --font-display: "Urbanist", "Segoe UI", ui-sans-serif, sans-serif;
+  --font-body:    "Mulish", "Segoe UI", ui-sans-serif, sans-serif;
+  --font-mono:    "Geist Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1.0625rem;
+  --text-md:   1.25rem;
+  --text-lg:   1.5625rem;
+  --text-xl:   1.953rem;
+  --text-2xl:  2.441rem;
+  --text-3xl:  3.4rem;
+  --text-display:   clamp(2.35rem, 3.6vw + 1rem, 4.25rem);
+  --text-display-s: clamp(2rem, 2.2vw + 1.1rem, 3.1rem);
+  --text-name:      clamp(3.4rem, 6.4vw + 0.6rem, 6.4rem);
+
+  /* space · 4pt scale */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+  --space-4xl: 9rem;
+
+  --page-max:    76rem;
+  --page-gutter: clamp(1rem, 4vw, 3rem);
+  --measure:     65ch;
+
+  /* rules, radius */
+  --rule-hair:   1px;
+  --rule-strong: 2px;
+  --radius-chip: 999px;
+  --radius-card: 18px;
+  --radius-panel: 28px;
+
+  /* motion */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:     cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long:  420ms;
+  --dur-draw:  1400ms;
+  --dur-ticker: 60s;
+
+  /* z */
+  --z-base:   1;
+  --z-raised: 10;
+  --z-sticky: 200;
+  --z-modal:  400;
+}

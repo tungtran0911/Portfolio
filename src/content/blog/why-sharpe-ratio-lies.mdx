@@ -1,0 +1,50 @@
+---
+title: "Why the Sharpe ratio lies, and what to use instead"
+description: "Sharpe is the field's lingua franca, but it's surprisingly easy to mislead with. A short tour of Probabilistic Sharpe Ratio (Lopez de Prado) and why I now report both."
+pubDate: 2026-04-12
+tags: ["risk metrics", "backtesting"]
+---
+
+The first number anyone shows you on a quant pitch deck is the Sharpe ratio. It's clean, scale-free, comparable across strategies. And dangerously easy to game.
+
+Three failure modes I've personally walked into:
+
+## 1. Higher Sharpe from shorter histories
+
+Sample Sharpe is a noisy estimate of true Sharpe. Run a coin-flip strategy long enough and you'll see realized Sharpes ranging from -1 to +1.5 just from sample variance. The shorter the backtest, the wider the band. Yet the convention is to report a single number, without a confidence interval.
+
+## 2. Sharpe ignores higher moments
+
+The Sharpe formula assumes returns are roughly Gaussian. They aren't. Strategies with negative skew (sell options, momentum during a regime shift) can post lovely Sharpes for years and then blow up in a single month. The metric never told you about the tail.
+
+## 3. Backtest overfitting inflates Sharpe by construction
+
+Try N strategy parameterizations, pick the best Sharpe, report it. The expected best Sharpe under the null hypothesis (no real edge) grows roughly with √(2 ln N). You will *always* find a "0.8 Sharpe" strategy if you tried 50 of them.
+
+## The fix: Probabilistic Sharpe Ratio
+
+Lopez de Prado's PSR computes the probability that the *true* Sharpe exceeds a benchmark, given the observed Sharpe, sample size, and the higher moments of returns. The formula:
+
+```
+PSR(SR*) = Φ( (SR_obs - SR*) · √(n - 1) / √(1 - γ_3·SR_obs + (γ_4 - 1)/4 · SR_obs²) )
+```
+
+where γ₃ is skew, γ₄ is kurtosis, n is sample size, and Φ is the standard normal CDF. Plug in your observed Sharpe, the benchmark you want to beat, and you get a probability.
+
+I now report `PSR(0.5)` alongside Sharpe. If it's below 95%, the result isn't statistically distinguishable from "lucky".
+
+## A practical workflow
+
+For [quant-factor-portfolio](/projects/quant-factor-portfolio) my reporting checklist is:
+
+1. **Sharpe.** The field's lingua franca. Required.
+2. **PSR(0.5).** Is the result statistically real?
+3. **Bootstrap 95% CI on Sharpe.** Visual companion to PSR.
+4. **Sortino + Max Drawdown.** Captures asymmetry that Sharpe misses.
+5. **Information Ratio vs benchmark.** Answers "did I add value?", not "did I make money?".
+
+It's three more lines of code per backtest. Catches a lot of self-deception.
+
+---
+
+*Further reading*: Lopez de Prado, *Advances in Financial Machine Learning* (2018), chapter 14.

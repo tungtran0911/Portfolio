@@ -1,0 +1,36 @@
+---
+// Horizontal bars with the value printed beside each label.
+// `best` highlights one row in the accent; `mark` draws a threshold line across every bar.
+interface Row {
+  label: string;
+  value: number;
+  best?: boolean;
+}
+
+interface Props {
+  rows: Row[];
+  digits?: number;
+  unit?: string;
+  max?: number;
+  mark?: { value: number; label: string };
+  label: string;
+}
+
+const { rows, digits = 3, unit = '', max, mark, label } = Astro.props;
+const top = max ?? Math.max(...rows.map((r) => r.value), mark?.value ?? 0);
+const pct = (v: number) => ((v / top) * 100).toFixed(2);
+---
+
+<figure class="fig">
+  <ul class:list={['bars', { 'bars--mark': mark }]} aria-label={label} style={mark ? `--m: ${pct(mark.value)}` : undefined}>
+    {rows.map((r) => (
+      <li class:list={{ 'is-best': r.best }}>
+        <span>{r.label}</span>
+        <span class="v">{r.value.toFixed(digits)}{unit}</span>
+        <span class="bar" aria-hidden="true"><span style={`--w: ${pct(r.value)}`}></span></span>
+      </li>
+    ))}
+  </ul>
+  {mark && <p class="bars__mark-label"><span class="key key--mark" aria-hidden="true"></span>{mark.label}</p>}
+  <figcaption><slot /></figcaption>
+</figure>

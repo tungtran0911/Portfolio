@@ -1,0 +1,31 @@
+---
+// The header inside every panel, as in the reference: brand left, links right,
+// the panel's own section underlined. On small screens the links fold into the Index sheet.
+interface Props {
+  active: string;
+  primary?: boolean;
+  /** '' on the front page (in-page anchors), '/' on inner pages (back to the front page). */
+  base?: string;
+}
+import { homeSections as sections } from '@/data/site';
+const { active, primary = false, base = '' } = Astro.props;
+---
+
+<header class="phead">
+  <a class="phead__brand" href={`${base}#home`}>
+    <span class="phead__name">Tung Tran</span>
+    <span class="phead__tag">quant research · sydney</span>
+  </a>
+  <nav class="phead__nav" aria-label={primary ? 'Primary' : `Sections, from ${active}`}>
+    <ul>
+      {sections.map((s) => (
+        <li>
+          <a href={`${base}#${s.id}`} aria-current={s.id === active ? 'true' : undefined}>{s.label}</a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+  <button class="phead__menu" type="button" data-sheet="index" aria-label="Open the section index">
+    <span aria-hidden="true"></span><span aria-hidden="true"></span>
+  </button>
+</header>

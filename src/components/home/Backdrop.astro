@@ -1,0 +1,44 @@
+---
+// The fixed backdrop behind every page: diagonal bands, a faint noise grain, Brownian-motion "veins" in place of marble,
+// and two giant watermark words. Purely decorative, hidden from assistive tech.
+// Paths are random walks from a fixed seed, so every build draws the same veins.
+function rng(seed: number) {
+  return () => {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rand = rng(20261005);
+const gauss = () => {
+  const u = 1 - rand();
+  const v = rand();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+};
+
+const W = 1440;
+const H = 900;
+// each vein starts on the left and drifts down-right, like the diagonal grain in the reference
+const veins = Array.from({ length: 6 }, (_, k) => {
+  let x = -40;
+  let y = 60 + k * 150 + gauss() * 30;
+  const pts: string[] = [];
+  const steps = 260;
+  for (let i = 0; i <= steps; i++) {
+    pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    x += (W + 80) / steps;
+    y += 0.55 + gauss() * 3.2;
+  }
+  return { d: `M${pts.join(' L')}`, w: k % 3 === 0 ? 1.4 : 0.8, o: k % 3 === 0 ? 0.55 : 0.32 };
+});
+---
+
+<div class="backdrop" aria-hidden="true">
+  <svg class="backdrop__veins" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+    {veins.map((v) => <path d={v.d} style={`--w: ${v.w}; --o: ${v.o}`} />)}
+  </svg>
+  <span class="backdrop__word backdrop__word--top">QUANT</span>
+  <span class="backdrop__word backdrop__word--side">TIME SERIES</span>
+</div>

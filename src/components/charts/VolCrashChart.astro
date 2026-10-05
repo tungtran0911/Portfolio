@@ -1,0 +1,139 @@
+---
+// Forecast vs realised SPY volatility through the 2020 crash.
+// Data: src/data/spy-vol-crash.json, exported from vol-har-conformal (test window, refit daily).
+import data from '@/data/spy-vol-crash.json';
+
+interface Props {
+  showOls?: boolean;
+}
+
+const { showOls = false } = Astro.props;
+
+const W = 640;
+const H = 340;
+const m = { l: 34, r: 10, t: 14, b: 28 };
+const n = data.dates.length;
+const yMax = 200;
+const px = (i: number) => m.l + (i / (n - 1)) * (W - m.l - m.r);
+const py = (v: number) => m.t + (1 - Math.min(v, yMax) / yMax) * (H - m.t - m.b);
+const path = (vals: number[]) =>
+  vals.map((v, i) => `${i ? 'L' : 'M'}${px(i).toFixed(1)} ${py(v).toFixed(1)}`).join(' ');
+
+const yTicks = [0, 50, 100, 150, 200];
+const monthName = (d: string) =>
+  new Date(d + 'T00:00:00Z').toLocaleString('en-AU', { month: 'short', timeZone: 'UTC' });
+const xTicks = data.dates
+  .map((d, i) => ({ d, i }))
+  .filter(({ d }, k, arr) => k === 0 || d.slice(0, 7) !== arr[k - 1].d.slice(0, 7));
+
+const peak = data.actual.reduce((best, v, i) => (v > data.actual[best] ? i : best), 0);
+const peakDay = new Date(data.dates[peak] + 'T00:00:00Z').toLocaleDateString('en-AU', {
+  day: 'numeric', month: 'short', timeZone: 'UTC',
+});
+
+const series = [
+  { key: 'actual', label: 'actual' },
+  { key: 'har_qlike', label: 'HAR-QLIKE' },
+  { key: 'garch', label: 'GARCH' },
+  ...(showOls ? [{ key: 'har_ols', label: 'HAR-OLS' }] : []),
+];
+const points = data.dates.map((d, i) => [d, ...series.map((s) => (data as any)[s.key][i])]);
+const idle = `${n} trading days, Feb–Jun 2020 · hover or use ← → for daily values`;
+---
+
+<figure class="fig">
+  <ul class="legend" aria-hidden="true">
+    <li><span class="key key--dot"></span>Realised (Garman–Klass + overnight)</li>
+    <li><span class="key"></span>HAR trained on QLIKE</li>
+    <li><span class="key key--alt"></span>GARCH(1,1)</li>
+    {showOls && <li><span class="key key--ink"></span>HAR fitted by OLS</li>}
+  </ul>
+  <p class="fig__readout" data-readout data-idle={idle}>{idle}</p>
+  <div
+    class="chart"
+    tabindex="0"
+    role="img"
+    aria-label={`Line chart. Annualised SPY volatility, February to June 2020. Realised volatility peaked at ${data.actual[peak]}% on ${peakDay}; the HAR-QLIKE forecast peaked at ${Math.max(...data.har_qlike)}% and GARCH at ${Math.max(...data.garch)}%.`}
+    data-chart
+    data-labels={JSON.stringify(series.map((s) => s.label))}
+    data-points={JSON.stringify(points)}
+    data-x0={m.l}
+    data-x1={W - m.r}
+    data-w={W}
+  >
+    <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
+      <g class="grid">
+        {yTicks.map((t) => <line x1={m.l} x2={W - m.r} y1={py(t)} y2={py(t)} />)}
+      </g>
+      <g class="axis">
+        {yTicks.map((t) => (
+          <text x={m.l - 6} y={py(t) + 4} text-anchor="end">{t === yMax ? `${t}%` : t}</text>
+        ))}
+        {xTicks.map(({ d, i }) => (
+          <text x={px(i)} y={H - 8} text-anchor={i === 0 ? 'start' : 'middle'}>
+            {monthName(d)}{i === 0 ? ' 2020' : ''}
+          </text>
+        ))}
+      </g>
+      <g>
+        {data.actual.map((v, i) => <circle class="dot" cx={px(i)} cy={py(v)} r="2.2" />)}
+      </g>
+      {showOls && <path class="line line--ink draw" d={path(data.har_ols)} pathLength="1" />}
+      <path class="line line--alt" d={path(data.garch)} />
+      <path class="line draw" d={path(data.har_qlike)} pathLength="1" />
+      <text class="note" x={px(peak) + 8} y={py(data.actual[peak]) + 4}>
+        {peakDay}: {data.actual[peak]}%
+      </text>
+      <line class="cursor" data-cursor x1={m.l} x2={m.l} y1={m.t} y2={H - m.b} />
+      <rect class="hit" x={m.l} y={m.t} width={W - m.l - m.r} height={H - m.t - m.b} />
+    </svg>
+  </div>
+  <figcaption><slot /></figcaption>
+</figure>
+
+<script>
+  const fmt = (v: number) => `${v.toFixed(1)}%`;
+  document.querySelectorAll<HTMLElement>('[data-chart]').forEach((chart) => {
+    const points: [string, ...number[]][] = JSON.parse(chart.dataset.points!);
+    const labels: string[] = JSON.parse(chart.dataset.labels!);
+    const x0 = Number(chart.dataset.x0);
+    const x1 = Number(chart.dataset.x1);
+    const w = Number(chart.dataset.w);
+    const cursor = chart.querySelector<SVGLineElement>('[data-cursor]')!;
+    const readout = chart.parentElement!.querySelector<HTMLElement>('[data-readout]')!;
+    let index = -1;
+
+    const show = (i: number) => {
+      index = Math.max(0, Math.min(points.length - 1, i));
+      const x = x0 + (index / (points.length - 1)) * (x1 - x0);
+      cursor.setAttribute('x1', String(x));
+      cursor.setAttribute('x2', String(x));
+      const [date, ...vals] = points[index];
+      readout.textContent = `${date} · ` + vals.map((v, k) => `${labels[k]} ${fmt(v)}`).join(' · ');
+      chart.classList.add('is-active');
+    };
+    const hide = () => {
+      chart.classList.remove('is-active');
+      readout.textContent = readout.dataset.idle ?? '';
+    };
+    const fromPointer = (e: PointerEvent) => {
+      const box = chart.getBoundingClientRect();
+      const vx = ((e.clientX - box.left) / box.width) * w;
+      show(Math.round(((vx - x0) / (x1 - x0)) * (points.length - 1)));
+    };
+
+    chart.addEventListener('pointermove', fromPointer);
+    chart.addEventListener('pointerdown', fromPointer);
+    chart.addEventListener('pointerleave', hide);
+    chart.addEventListener('blur', hide);
+    chart.addEventListener('keydown', (e) => {
+      const step = e.shiftKey ? 5 : 1;
+      if (e.key === 'ArrowRight') show(index < 0 ? 0 : index + step);
+      else if (e.key === 'ArrowLeft') show(index < 0 ? points.length - 1 : index - step);
+      else if (e.key === 'Home') show(0);
+      else if (e.key === 'End') show(points.length - 1);
+      else return;
+      e.preventDefault();
+    });
+  });
+</script>

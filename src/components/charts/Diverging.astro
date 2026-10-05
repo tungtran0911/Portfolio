@@ -1,0 +1,35 @@
+---
+// Zero-centred bars: positive to the right of the axis, negative to the left.
+interface Row {
+  label: string;
+  value: number;
+  text: string;
+  kind?: 'pos' | 'neg' | 'net';
+}
+
+interface Props {
+  rows: Row[];
+  min: number;
+  max: number;
+  label: string;
+}
+
+const { rows, min, max, label } = Astro.props;
+const span = max - min;
+const at = (v: number) => (((v - min) / span) * 100).toFixed(2);
+---
+
+<figure class="fig">
+  <ul class="diverge" aria-label={label} style={`--zero: ${at(0)}`}>
+    {rows.map((r) => (
+      <li class:list={[r.kind && `is-${r.kind}`]}>
+        <span>{r.label}</span>
+        <span class:list={['v', { neg: r.value < 0 && r.kind === 'net' }]}>{r.text}</span>
+        <span class="track" aria-hidden="true">
+          <span style={`--from: ${at(Math.min(0, r.value))}; --len: ${((Math.abs(r.value) / span) * 100).toFixed(2)}`}></span>
+        </span>
+      </li>
+    ))}
+  </ul>
+  <figcaption><slot /></figcaption>
+</figure>

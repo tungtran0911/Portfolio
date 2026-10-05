@@ -1,0 +1,189 @@
+---
+import '@/styles/global.css';
+import '@/styles/frame.css';
+// Wallpaper: BackdropValley (autumn valley + owl). Alternatives: BackdropArcane (night castle), Backdrop (Brownian veins).
+import Backdrop from '@/components/home/BackdropValley.astro';
+import PanelHead from '@/components/home/PanelHead.astro';
+import Sheet from '@/components/home/Sheet.astro';
+import SheetController from '@/components/home/SheetController.astro';
+import { person, pageSequence } from '@/data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  /** The front page draws its own panels. Inner pages get one panel, the same header and prev / next. */
+  bare?: boolean;
+}
+
+const {
+  title = 'Tung Tran · Quant research, time series',
+  description = 'Tung Tran (Tom). Computing Science (Honours) at UTS Sydney, Quantitative Trading Trainee at D+A Strategies. Time series, volatility and market microstructure, built from scratch and tested out of sample.',
+  ogImage = '/og.png',
+  bare = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+
+// Where this page sits in the A-to-Z sequence. Blog posts sit just after Notes.
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+let at = pageSequence.findIndex((p) => p.path === path);
+let order = at;
+if (at < 0 && path.startsWith('/blog/')) {
+  at = pageSequence.findIndex((p) => p.path === '/blog');
+  order = at + 0.5;
+}
+if (at < 0) order = pageSequence.length;
+const entry = at >= 0 ? pageSequence[at] : null;
+const prev = at > 0 ? pageSequence[path.startsWith('/blog/') ? at : at - 1] : null;
+const next = at >= 0 && at < pageSequence.length - 1 ? pageSequence[at + 1] : null;
+const base = bare ? '' : '/';
+
+const index = [
+  { id: 'home', label: 'Home' },
+  { id: 'about', label: 'About' },
+  { id: 'toolkit', label: 'Toolkit' },
+  { id: 'research', label: 'Research' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'awards', label: 'Awards' },
+  { id: 'contact', label: 'Contact' },
+];
+---
+
+<!doctype html>
+<html lang="en" data-order={order}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonical} />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#050b1c" />
+    <meta name="author" content="Tung Tran" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site)} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Mulish:wght@300;400;600;700&family=Urbanist:wght@300;400;500;600&display=swap"
+    />
+
+    <script is:inline>
+      // Cross-page transitions. Moving to a later page in the sequence slides up, an earlier one
+      // slides down; a study's title glides from the card or sheet you clicked into the page heading.
+      (() => {
+        const KEY = 'tt-order';
+        const me = Number(document.documentElement.dataset.order || 0);
+        const slugOf = (url) => {
+          const m = new URL(url, location.href).pathname.match(/^\/projects\/([^/]+)\/?$/);
+          return m ? m[1] : null;
+        };
+        const clearNames = () =>
+          document.querySelectorAll('[data-study-src]').forEach((el) => (el.style.viewTransitionName = ''));
+
+        window.addEventListener('pageswap', (e) => {
+          try { sessionStorage.setItem(KEY, String(me)); } catch (err) {}
+          if (!e.viewTransition || !e.activation) return;
+          const slug = slugOf(e.activation.entry.url);
+          if (!slug || document.querySelector('h1[data-study-title]')) return;
+          const sheet = document.querySelector('dialog.sheet[open]');
+          const el = sheet
+            ? sheet.querySelector('[data-study-src="' + slug + '"]')
+            : document.querySelector('[data-study-src="' + slug + '"]');
+          if (el) el.style.viewTransitionName = 'study-title';
+        });
+
+        window.addEventListener('pagehide', () => {
+          try { sessionStorage.setItem(KEY, String(me)); } catch (err) {}
+        });
+
+        window.addEventListener('pageshow', (e) => {
+          if (e.persisted) clearNames();
+        });
+
+        window.addEventListener('pagereveal', (e) => {
+          if (!e.viewTransition) return;
+          let from = null;
+          try { from = sessionStorage.getItem(KEY); } catch (err) {}
+          e.viewTransition.types.add(from !== null && Number(from) > me ? 'back' : 'forward');
+          const prevUrl = window.navigation && navigation.activation && navigation.activation.from && navigation.activation.from.url;
+          const slug = prevUrl && slugOf(prevUrl);
+          if (!slug || document.querySelector('h1[data-study-title]')) return;
+          const el = document.querySelector('[data-study-src="' + slug + '"]');
+          if (!el) return;
+          el.style.viewTransitionName = 'study-title';
+          e.viewTransition.finished.finally(clearNames);
+        });
+      })();
+    </script>
+  </head>
+  <body class:list={{ 'is-bare': bare, 'is-doc': !bare }}>
+    <a class="skip" href="#main">Skip to content</a>
+    <Backdrop />
+    <div class="topnav" data-topnav>
+      <PanelHead active={entry?.section ?? 'home'} base={base} primary />
+    </div>
+    <main id="main">
+      {bare ? (
+        <slot />
+      ) : (
+        <div class="page">
+          <article class="panel panel--doc">
+            <slot />
+          </article>
+          {(prev || next) && (
+            <nav class="page-next" aria-label="Continue through the portfolio">
+              {prev && <a href={prev.path} rel="prev"><span>← Previous</span><b>{prev.label}</b></a>}
+              {next && <a href={next.path} rel="next"><span>Next →</span><b>{next.label}</b></a>}
+            </nav>
+          )}
+          <aside class="glass" aria-label="Contact card">
+            <p class="glass__line"><a href={`mailto:${person.email}`}>{person.email}</a></p>
+            <p class="glass__small">Sydney · © 2026 Tung Tran · Built with Astro, no trackers</p>
+          </aside>
+        </div>
+      )}
+    </main>
+
+    <Sheet id="index" title="Index" kicker="Sections">
+      <ul class="sheet__index">
+        {index.map((s, i) => (
+          <li><a href={`${base}#${s.id}`}><span>0{i + 1}</span>{s.label}</a></li>
+        ))}
+      </ul>
+    </Sheet>
+    <SheetController />
+
+    <script>
+      // The top bar frosts once the page has moved.
+      const bar = document.querySelector('[data-topnav]');
+      const onScroll = () => bar?.classList.toggle('is-scrolled', window.scrollY > 24);
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+
+      // Keep chart labels a readable size on screen whatever width the SVG is drawn at.
+      const ro = new ResizeObserver((entries) => {
+        for (const { target } of entries) {
+          const svg = target as SVGSVGElement;
+          const vb = svg.viewBox.baseVal;
+          if (vb && vb.width) svg.style.setProperty('--k', String(svg.clientWidth / vb.width));
+        }
+      });
+      document.querySelectorAll<SVGSVGElement>('.chart svg').forEach((svg) => ro.observe(svg));
+    </script>
+  </body>
+</html>

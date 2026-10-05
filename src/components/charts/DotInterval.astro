@@ -1,0 +1,52 @@
+---
+// Point estimates with 95% intervals across categories, around a zero line.
+interface Row {
+  label: string;
+  value: number;
+  lo: number;
+  hi: number;
+  highlight?: boolean;
+}
+
+interface Props {
+  rows: Row[];
+  min: number;
+  max: number;
+  ticks: number[];
+  label: string;
+}
+
+const { rows, min, max, ticks, label } = Astro.props;
+const W = 560;
+const H = 260;
+const m = { l: 44, r: 12, t: 12, b: 30 };
+const band = (W - m.l - m.r) / rows.length;
+const px = (i: number) => m.l + band * (i + 0.5);
+const py = (v: number) => m.t + ((max - v) / (max - min)) * (H - m.t - m.b);
+const fmt = (v: number) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+---
+
+<figure class="fig">
+  <div class="chart" role="img" aria-label={label}>
+    <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
+      <g class="grid">
+        {ticks.map((t) => <line x1={m.l} x2={W - m.r} y1={py(t)} y2={py(t)} />)}
+      </g>
+      <line class="line--ink line" x1={m.l} x2={W - m.r} y1={py(0)} y2={py(0)} />
+      <g class="axis">
+        {ticks.map((t) => <text x={m.l - 6} y={py(t) + 4} text-anchor="end">{fmt(t)}</text>)}
+        {rows.map((r, i) => <text x={px(i)} y={H - 8} text-anchor="middle">{r.label}</text>)}
+      </g>
+      {rows.map((r, i) => (
+        <g>
+          <line class:list={['line', { 'line--ink': !r.highlight }]} x1={px(i)} x2={px(i)} y1={py(r.lo)} y2={py(r.hi)} />
+          <line class:list={['line', { 'line--ink': !r.highlight }]} x1={px(i) - 6} x2={px(i) + 6} y1={py(r.lo)} y2={py(r.lo)} />
+          <line class:list={['line', { 'line--ink': !r.highlight }]} x1={px(i) - 6} x2={px(i) + 6} y1={py(r.hi)} y2={py(r.hi)} />
+          <circle class:list={[r.highlight ? 'pt pt--hi' : 'pt']} cx={px(i)} cy={py(r.value)} r="4.5" />
+          <text class="note" x={px(i) + 10} y={py(r.value) + 4}>{fmt(r.value)}</text>
+        </g>
+      ))}
+    </svg>
+  </div>
+  <figcaption><slot /></figcaption>
+</figure>

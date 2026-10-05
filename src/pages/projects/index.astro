@@ -1,0 +1,104 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const research = [
+  {
+    when: '2026 –',
+    title: 'VN30 index futures: an order‑flow edge that costs erase',
+    href: '/projects/vn30-futures',
+    desc: 'Self-recorded tick data for Vietnam’s index futures, a trade-flow imbalance signal tested leave-one-session-out, and a +2.35-tick gross edge that becomes −3.72 after spread, fees and tax (t = −3.10).',
+    tags: 'microstructure · costs · pytest',
+  },
+  {
+    when: '2026',
+    title: 'SPY volatility: a HAR model trained on the loss that matters',
+    href: '/projects/spy-volatility',
+    desc: 'From simple regression to a log-link HAR trained on QLIKE by from-scratch gradient descent. Test QLIKE −47% vs naive and −6% vs GARCH(1,1), Diebold–Mariano p = 0.014.',
+    tags: 'time series · NumPy · SciPy',
+  },
+];
+
+const earlier = [
+  {
+    when: '2025',
+    title: 'Quant factor portfolio',
+    href: '/projects/quant-factor-portfolio',
+    desc: 'Cross-sectional multi-factor backtester on 100 US large caps: walk-forward, three optimisers, 5 bp costs, Streamlit dashboard.',
+    tags: 'Python · CVXPY · Streamlit',
+  },
+  {
+    when: '2025',
+    title: 'FinLab',
+    href: '/projects/finlab',
+    desc: 'ASX research dashboard with two backtested strategies and a retrieval-augmented assistant that cites its sources.',
+    tags: 'pandas · FAISS · Docker',
+  },
+  {
+    when: 'n.d.',
+    title: 'Urban carbon emissions: hybrid forecasting and routing',
+    href: null,
+    desc: 'ARIMA–LSTM forecasting with reinforcement-learning policies for EV fleet charging and routing, using Google Maps, OpenWeather and EVN data. No write-up yet.',
+    tags: 'ARIMA · LSTM · RL',
+  },
+];
+---
+
+<BaseLayout
+  title="Research · Tung Tran"
+  description="Research studies and earlier projects by Tung Tran: VN30 futures microstructure, SPY volatility forecasting, factor investing."
+>
+  <section class="wrap doc-head">
+    <h1 class="doc-head__title">Research</h1>
+    <p class="doc-head__lede">
+      Current studies first, then earlier projects. Each study links to its code; the numbers on these pages
+      are the ones the code prints.
+    </p>
+  </section>
+
+  <section class="section section--tight wrap" aria-labelledby="studies">
+    <h2 id="studies" class="section__title">Studies</h2>
+    <ul class="index">
+      {research.map((p) => (
+        <li>
+          <a class="index__row" href={p.href}>
+            <span class="index__when">{p.when}</span>
+            <span>
+              <span class="index__title" data-study-src={p.href.split('/').pop()}>{p.title}</span>
+              <span class="index__desc">{p.desc}</span>
+            </span>
+            <span class="index__tags">{p.tags}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="section section--tight wrap" aria-labelledby="earlier">
+    <h2 id="earlier" class="section__title">Earlier projects</h2>
+    <ul class="index">
+      {earlier.map((p) => (
+        <li>
+          {p.href ? (
+            <a class="index__row" href={p.href}>
+              <span class="index__when">{p.when}</span>
+              <span>
+                <span class="index__title" data-study-src={p.href.split('/').pop()}>{p.title}</span>
+                <span class="index__desc">{p.desc}</span>
+              </span>
+              <span class="index__tags">{p.tags}</span>
+            </a>
+          ) : (
+            <div class="index__row">
+              <span class="index__when">{p.when}</span>
+              <span>
+                <span class="index__title">{p.title}</span>
+                <span class="index__desc">{p.desc}</span>
+              </span>
+              <span class="index__tags">{p.tags}</span>
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>

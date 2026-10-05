@@ -1,0 +1,105 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CaseHead from '@/components/CaseHead.astro';
+import { repos } from '@/data/site';
+---
+
+<BaseLayout
+  title="Quant factor portfolio · Tung Tran"
+  description="A cross-sectional multi-factor equity backtester on 100 S&P 500 names: walk-forward, three optimisers, 5 bp costs, Streamlit dashboard. Earlier work, 2025."
+>
+  <article class="wrap">
+    <CaseHead
+      title="Quant factor portfolio"
+      lede="A from-scratch cross-sectional factor pipeline on US equities: data, factor construction, portfolio optimisation, walk-forward backtest and attribution, with a Streamlit dashboard. Earlier work from 2025, kept as a record of where I started."
+      meta={[
+        ['Period', '2025'],
+        ['Type', 'Personal project, archived'],
+        ['Universe', '100 S&P 500 names + SPY'],
+        ['Stack', 'Python, pandas, CVXPY, Streamlit, pytest'],
+      ]}
+      links={[{ label: 'Code ↗', href: repos.qfp, primary: true }]}
+    />
+
+    <div class="doc">
+      <h2>Headline results</h2>
+      <div class="table-scroll">
+        <table class="spec">
+          <caption>
+            Long-only top quintile by composite score, risk-parity weights. Monthly rebalance, 5 bp linear cost,
+            walk-forward 2018-01-01 to 2024-12-31. From <code>./scripts/reproduce.sh</code>.
+          </caption>
+          <thead><tr><th>Metric</th><th class="n">Value</th></tr></thead>
+          <tbody>
+            <tr><td>Sharpe</td><td class="n">0.93</td></tr>
+            <tr><td>CAGR</td><td class="n">17.7%</td></tr>
+            <tr><td>Annual volatility</td><td class="n">19.6%</td></tr>
+            <tr><td>Maximum drawdown</td><td class="n">−32.6%</td></tr>
+            <tr><td>Sortino</td><td class="n">1.14</td></tr>
+            <tr><td>Calmar</td><td class="n">0.54</td></tr>
+            <tr><td>Information ratio vs SPY</td><td class="n">+0.41</td></tr>
+            <tr><td>Daily hit rate</td><td class="n">54.8%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <p>
+          Read these with the limitations below in mind: the universe is today’s S&amp;P 500 membership, so the
+          backtest carries survivorship bias and the numbers are optimistic.
+        </p>
+      </div>
+
+      <h2>Method</h2>
+      <ol>
+        <li><strong>Data.</strong> yfinance, cached as Parquet: 100 large-cap S&amp;P 500 constituents plus SPY.</li>
+        <li>
+          <strong>Factors</strong>, built cross-sectionally with documented signs: momentum (12-1 month, skipping
+          the last five days), low volatility (252-day realised, negated), a size proxy (negative log dollar
+          volume), a value proxy (inverse three-year return), a quality proxy (return stability) and rolling CAPM
+          beta for neutralisation.
+        </li>
+        <li><strong>Preprocessing.</strong> Winsorise at 1/99% per date, z-score, optionally residualise against rolling beta.</li>
+        <li><strong>Composite.</strong> Weighted z-score: momentum 0.4, volatility 0.2, quality 0.2, value 0.1, size 0.1.</li>
+        <li>
+          <strong>Portfolios.</strong> Dollar-neutral long-short quintiles, mean-variance (CVXPY, Ledoit–Wolf
+          covariance) or risk parity on the top quintile.
+        </li>
+        <li><strong>Backtest.</strong> Monthly rebalance, scores lagged one day, 5 bp linear cost on turnover.</li>
+        <li><strong>Reporting.</strong> Streamlit dashboard: KPIs, equity curve, drawdown, rolling Sharpe, factor diagnostics.</li>
+      </ol>
+
+      <h2>Two variants, two questions</h2>
+      <ul>
+        <li>
+          <strong>Long-short, dollar-neutral</strong>, isolates the factor signal: Sharpe 0.26, volatility 7.3%,
+          maximum drawdown −14.7%. It carries no market beta, so its information ratio against SPY is negative by
+          design.
+        </li>
+        <li>
+          <strong>Risk-parity long-only top quintile</strong>: Sharpe 0.93, CAGR 17.7%, positive information ratio
+          against SPY. Most of the difference from the long-short book is market exposure.
+        </li>
+      </ul>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li><strong>Survivorship bias.</strong> Current index membership; performance is optimistic.</li>
+        <li><strong>Price-based proxies</strong> for value and quality, because fundamentals need paid feeds.</li>
+        <li><strong>No sector neutralisation.</strong> GICS exposures are not controlled.</li>
+        <li><strong>Linear cost model</strong> in place of square-root or Almgren–Chriss impact.</li>
+      </ul>
+
+      <h2>Engineering</h2>
+      <p>
+        About 1,500 lines across seven modules, 26 tests (47% line coverage), CI on Python 3.11 and 3.12, and a
+        Dockerfile that serves the dashboard on port 8501. The whole pipeline reruns in about two minutes with
+        cached prices.
+      </p>
+      <pre><code>git clone {repos.qfp}
+cd quant-factor-portfolio
+pip install -e .
+./scripts/reproduce.sh
+streamlit run app/streamlit_app.py</code></pre>
+    </div>
+  </article>
+</BaseLayout>

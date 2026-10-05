@@ -1,0 +1,40 @@
+---
+// Full-width strip of the SPY 2020 crash: realised volatility (dots), my HAR-QLIKE forecast (line),
+// GARCH(1,1) (dashed). Real data from vol-har-conformal.
+import data from '@/data/spy-vol-crash.json';
+
+interface Props {
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+
+const W = compact ? 360 : 1200;
+const H = compact ? 120 : 210;
+const m = compact ? { l: 2, r: 2, t: 6, b: 4 } : { l: 4, r: 4, t: 26, b: 26 };
+const n = data.dates.length;
+const yMax = 200;
+const px = (i: number) => m.l + (i / (n - 1)) * (W - m.l - m.r);
+const py = (v: number) => m.t + (1 - Math.min(v, yMax) / yMax) * (H - m.t - m.b);
+const path = (vals: number[]) => vals.map((v, i) => `${i ? 'L' : 'M'}${px(i).toFixed(1)} ${py(v).toFixed(1)}`).join(' ');
+const peak = data.actual.reduce((b, v, i) => (v > data.actual[b] ? i : b), 0);
+---
+
+<div class="chart strip" role="img" aria-label="SPY volatility from February to June 2020. Realised volatility peaked at 196% on 16 March; the HAR-QLIKE forecast followed it up and back down.">
+  <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
+    {!compact && (
+      <g class="grid">
+        {[50, 100, 150].map((t) => <line x1={m.l} x2={W - m.r} y1={py(t)} y2={py(t)} />)}
+      </g>
+    )}
+    <g>{data.actual.map((v, i) => <circle class="dot" cx={px(i)} cy={py(v)} r={compact ? 1.4 : 2.4} />)}</g>
+    {!compact && <path class="line line--alt" d={path(data.garch)} />}
+    <path class="line draw" d={path(data.har_qlike)} pathLength="1" />
+    {!compact && (
+      <g class="axis">
+        <text x={m.l} y={H - 6}>Feb 2020</text>
+        <text x={W - m.r} y={H - 6} text-anchor="end">Jun 2020</text>
+        <text x={px(peak) + 10} y={py(data.actual[peak]) + 4}>16 Mar · σ 196%</text>
+      </g>
+    )}
+  </svg>
+</div>

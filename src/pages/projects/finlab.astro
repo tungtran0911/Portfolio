@@ -1,0 +1,67 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CaseHead from '@/components/CaseHead.astro';
+import { repos } from '@/data/site';
+---
+
+<BaseLayout
+  title="FinLab · Tung Tran"
+  description="ASX equity research dashboard: ETL, EDA, two backtested strategies and a RAG assistant that cites its sources. My first end-to-end pipeline, 2025."
+>
+  <article class="wrap">
+    <CaseHead
+      title="FinLab: an ASX research dashboard"
+      lede="An end-to-end equity research tool: an ETL pipeline, exploratory analysis, two backtested strategies with risk metrics, and a retrieval-augmented assistant that answers with source citations. My first complete pipeline, from 2025."
+      meta={[
+        ['Period', 'Feb – Sep 2025'],
+        ['Type', 'Personal project, archived'],
+        ['Data', '12k+ ASX price records'],
+        ['Stack', 'pandas, Streamlit, FAISS, Parquet, Docker'],
+      ]}
+      links={[{ label: 'Code ↗', href: repos.finlab, primary: true }]}
+    />
+
+    <div class="doc">
+      <h2>Backtest results</h2>
+      <div class="table-scroll">
+        <table class="spec">
+          <caption>SMA(50/200) crossover on ASX large caps, daily. As reported in the project at the time.</caption>
+          <thead><tr><th>Metric</th><th class="n">Value</th></tr></thead>
+          <tbody>
+            <tr><td>Strategy Sharpe</td><td class="n">0.98</td></tr>
+            <tr><td>Benchmark Sharpe</td><td class="n">0.62</td></tr>
+            <tr><td>CAGR</td><td class="n">11.4%</td></tr>
+            <tr><td>Maximum drawdown</td><td class="n">−22.1%</td></tr>
+            <tr><td>t-test vs benchmark, p</td><td class="n">0.032</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>What it does</h2>
+      <ul>
+        <li><strong>Data pipeline.</strong> yfinance ingest, cleaning, Parquet storage; idempotent and containerised.</li>
+        <li><strong>Exploration.</strong> Return distributions, rolling volatility, correlation matrices.</li>
+        <li><strong>Backtests.</strong> SMA(50/200) crossover and z-score mean reversion, with Sharpe, CAGR, drawdown and hit rate.</li>
+        <li>
+          <strong>Significance.</strong> A t-test of strategy against benchmark returns: the crossover clears 5%
+          (p = 0.032); mean reversion does not, and the dashboard says so.
+        </li>
+        <li><strong>Assistant.</strong> FAISS index over project notes and references, sentence-transformer retrieval, answers that cite the chunk used.</li>
+        <li><strong>Dashboard.</strong> Five Streamlit tabs: overview, exploration, backtest, signals, assistant.</li>
+      </ul>
+
+      <h2>What I’d do differently now</h2>
+      <p>
+        A single t-test on overlapping daily returns overstates confidence; today I would use a block bootstrap
+        or a Diebold–Mariano-style test with autocorrelation-robust errors, and report results after costs. That
+        is the standard the <a href="/projects/vn30-futures">VN30</a> and
+        <a href="/projects/spy-volatility">SPY volatility</a> studies hold to.
+      </p>
+      <p>
+        The practical lessons held up: caching aggregates in Parquet is what cut per-ticker analysis from about
+        two hours to five minutes, and containerising early meant the dashboard boots on a clean machine in under
+        30 seconds.
+      </p>
+    </div>
+  </article>
+</BaseLayout>

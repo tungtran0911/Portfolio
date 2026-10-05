@@ -1,0 +1,241 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CaseHead from '@/components/CaseHead.astro';
+import Diverging from '@/components/charts/Diverging.astro';
+import Bars from '@/components/charts/Bars.astro';
+import DotInterval from '@/components/charts/DotInterval.astro';
+import { repos } from '@/data/site';
+
+// All figures below are transcribed from the published write-up (README, commit 0415eda, 2026-09-24).
+const holds = [
+  { hold: '10 s', trades: 448, hit: '50%', gross: '+0.73', tg: '+2.09', spread: '2.14', fees: '3.82', net: '−5.22', tn: '−14.91' },
+  { hold: '30 s', trades: 201, hit: '49%', gross: '+1.38', tg: '+1.69', spread: '2.28', fees: '3.82', net: '−4.72', tn: '−5.80' },
+  { hold: '60 s', trades: 131, hit: '52%', gross: '+2.35', tg: '+1.96', spread: '2.26', fees: '3.81', net: '−3.72', tn: '−3.10', best: true },
+  { hold: '120 s', trades: 87, hit: '43%', gross: '+1.72', tg: '+0.71', spread: '2.06', fees: '3.81', net: '−4.15', tn: '−1.72' },
+  { hold: '300 s', trades: 53, hit: '32%', gross: '−4.71', tg: '−1.11', spread: '2.22', fees: '3.81', net: '−10.73', tn: '−2.53' },
+];
+---
+
+<BaseLayout
+  title="VN30 index futures: order flow and the turnover-tax floor · Tung Tran"
+  description="A self-recorded tick dataset for Vietnam's index futures, a trade-flow imbalance signal tested out of sample, and a +2.35-tick gross edge that fees, tax and spread turn into −3.72 ticks per trade (t = −3.10)."
+>
+  <article class="wrap">
+    <CaseHead
+      title="VN30 index futures: an order‑flow edge that costs erase"
+      lede="Does exchange-labelled order flow predict Vietnam’s index futures over seconds to minutes? And does any edge survive a tax levied on turnover rather than profit? The signal is there. It is smaller than the toll."
+      meta={[
+        ['Period', 'Aug 2026 – now'],
+        ['Type', 'Personal research'],
+        ['Market', 'VN30F front month, HNX'],
+        ['Stack', 'Python, pandas, PyArrow/Parquet, pytest'],
+      ]}
+      links={[
+        { label: 'Code and write-up ↗', href: repos.vn30, primary: true },
+      ]}
+    />
+
+    <div class="doc">
+      <h2>Why the cost side is the point</h2>
+      <p>
+        VN30 futures are the one liquid instrument in Vietnam that can express a short-horizon view in either
+        direction: equities cannot be sold short and settle T+2. But personal income tax on derivatives is
+        charged on <strong>turnover, not profit</strong>. Every side of every trade pays it, win or lose. And
+        the margin rate sits inside the tax base, so a regulator’s margin change rewrites the cost function.
+      </p>
+      <div class="table-scroll">
+        <table class="spec">
+          <caption>
+            Table 1. Round-trip cost for one contract at 1,884 index points, before spread. The tax formula
+            reproduces the regulator’s worked example to the exact đồng.
+          </caption>
+          <thead>
+            <tr><th>Margin regime</th><th class="n">Fees (VND)</th><th class="n">Tax (VND)</th><th class="n">Total (VND)</th><th class="n">Break-even</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10% (to Jul 2018)</td><td class="n">5,400</td><td class="n">18,840</td><td class="n">24,240</td><td class="n">2.42 ticks</td></tr>
+            <tr><td>13% (Jul 2018 – Dec 2022)</td><td class="n">5,400</td><td class="n">24,492</td><td class="n">29,892</td><td class="n">2.99 ticks</td></tr>
+            <tr class="is-best"><td>17% (since 15 Dec 2022)</td><td class="n">5,400</td><td class="n">32,028</td><td class="n">37,428</td><td class="n">3.74 ticks</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Because the tax scales with the index while the tick value is fixed, the break-even drifts with the
+        market: 2.89 to 4.14 ticks over the sample, median 3.81. Add the median two-tick spread and a taker pays
+        about six ticks per round trip. The fiscal part is the larger one.
+      </p>
+
+      <h2>Building a dataset that doesn’t exist</h2>
+      <p>
+        There is no public tick dataset for VN30 futures and none purchasable from outside Vietnam. The broker
+        feed I planned to use advertises anonymous market-data topics but refuses every anonymous connection, so
+        the recorder calls another broker’s public HTTP endpoints directly. Those carry the exchange’s own
+        aggressor flag on each trade (no Lee–Ready classifier needed) and board snapshots with three depth
+        levels, open interest and foreign flow, roughly every two seconds.
+      </p>
+      <p>
+        Trades and snapshots disappear at the close; a session not recorded is gone. So capture started before
+        any modelling: <strong>320k+ trades across eight sessions</strong>, 1-minute bars for 327 trading days,
+        and daily bars back to 2018 with <strong>97 contract rolls</strong> back-adjusted. The package is about
+        2.6k lines of Python with 43 pytest tests, each pinning a fact that can be checked outside the code: the
+        regulator’s tax example, the third-Thursday expiry rule, the roll alignment, the trade identity, the
+        absence of look-ahead.
+      </p>
+
+      <h2>The check that caught the bugs</h2>
+      <p>
+        Each trade carries the exchange’s running volume total. If the recorder holds every trade of a session,
+        the recorded sizes must sum to the largest running total seen; any shortfall is exactly the volume missing,
+        any excess is double counting. That turns “is the data complete?” into a number that has to be zero before
+        a session enters the study.
+      </p>
+      <ul>
+        <li>
+          <strong>The timestamp was not a trade identity.</strong> Fetching the same page twice returned the same
+          trade with a different sub-second stamp. De-duplicating on timestamp, price and size let repeats in and
+          inflated one session to 1.5× the exchange’s volume: 310,612 recorded against a counter of 200,484.
+          Trades are now keyed on the running total.
+        </li>
+        <li>
+          <strong>A network error read as the end of the data.</strong> After the laptop woke from sleep the first
+          request failed, the sweep treated the exception as “no more pages”, and the log reported zero missing
+          trades for a session missing most of its morning. Only an empty page ends a sweep now.
+        </li>
+        <li>
+          <strong>The roll adjustment was one bar early.</strong> After the fix, the adjusted move across each roll
+          equals the incoming contract’s own return to within 2.3 × 10<sup>−13</sup> points.
+        </li>
+      </ul>
+      <p>
+        None of these raised an error. Four of the eight recorded sessions pass the identity and a book check;
+        those four (9,244 book states, 6.3 hours of continuous trading) are the study sample. Bars agree with a
+        second provider on 99.3% of 32,917 overlapping minutes.
+      </p>
+
+      <h2>How long you must hold to clear the toll</h2>
+      <Bars
+        label="Median absolute move of the front month by horizon, in ticks, against the fees-and-tax floor"
+        digits={1}
+        unit=" ticks"
+        max={36}
+        mark={{ value: 3.81, label: 'Fees + tax, median 3.81 ticks (spread excluded)' }}
+        rows={[
+          { label: '1 minute', value: 6.0 },
+          { label: '5 minutes', value: 13.0 },
+          { label: '15 minutes', value: 23.0 },
+          { label: '30 minutes', value: 33.0 },
+        ]}
+      >
+        <b>Figure 1.</b> Median absolute move of the front month over h minutes, May 2025 to September 2026
+        (77,561 one-minute windows at h = 1). The floor is 64% of a typical one-minute move and 12% of a
+        30-minute one. Closing prices carry bid–ask bounce, so this comparison flatters intraday trading.
+      </Bars>
+      <p>
+        The tax doesn’t rule out intraday trading; it pushes the viable holding period out toward tens of
+        minutes. Order-flow predictability is known to decay within minutes. Whether those two windows overlap is
+        the question the rest of the study answers.
+      </p>
+
+      <h2>What the order flow predicts</h2>
+      <p>
+        The signal is trade-flow imbalance: buyer-initiated minus seller-initiated contracts over the trailing 30
+        seconds, counting only trades stamped at least a second before each snapshot. Returns are mid to mid, so a
+        signal is never scored against the bid–ask bounce it helped create. Contemporaneously, flow and price move
+        together (correlation +0.815). That is a sanity check that the recorded trades and the recorded book describe the
+        same market.
+      </p>
+      <DotInterval
+        label="Correlation of trade-flow imbalance with the forward mid-price move, by horizon, with 95% block-bootstrap intervals"
+        min={-0.15}
+        max={0.25}
+        ticks={[-0.1, 0, 0.1, 0.2]}
+        rows={[
+          { label: '10 s', value: 0.07, lo: -0.015, hi: 0.134 },
+          { label: '30 s', value: 0.118, lo: -0.007, hi: 0.205 },
+          { label: '60 s', value: 0.129, lo: -0.021, hi: 0.229, highlight: true },
+          { label: '120 s', value: 0.051, lo: -0.101, hi: 0.151 },
+          { label: '300 s', value: 0.01, lo: -0.104, hi: 0.101 },
+        ]}
+      >
+        <b>Figure 2.</b> Predictive correlation peaks between 30 and 60 seconds and is gone by five minutes.
+        That is the profile the microstructure literature predicts. It is positive in all four sessions at the peak, but
+        every 95% interval (block bootstrap, 5-minute blocks) includes zero. Four sessions are evidence of a small
+        effect, not proof of one.
+      </DotInterval>
+
+      <h2>The out-of-sample trading rule</h2>
+      <p>
+        When |imbalance| exceeds its 80th percentile (a threshold computed on the <em>other</em> sessions only, so
+        it never sees the session it trades), take one contract in the direction of the flow, crossing the spread
+        on entry and exit, and hold for a fixed time. Costs come from the cost model at the actual fill prices.
+      </p>
+      <div class="table-scroll">
+        <table class="spec">
+          <caption>Table 2. Ticks per trade, leave-one-session-out. Fills at the quoted touch with no queue, impact or latency. Every omission favours the strategy.</caption>
+          <thead>
+            <tr>
+              <th>Hold</th><th class="n">Trades</th><th class="n">Hit</th><th class="n">Gross</th><th class="n">t</th>
+              <th class="n">Spread</th><th class="n">Fees + tax</th><th class="n">Net</th><th class="n">t</th>
+            </tr>
+          </thead>
+          <tbody>
+            {holds.map((h) => (
+              <tr class:list={{ 'is-best': h.best }}>
+                <td>{h.hold}</td><td class="n">{h.trades}</td><td class="n">{h.hit}</td><td class="n">{h.gross}</td>
+                <td class="n">{h.tg}</td><td class="n">{h.spread}</td><td class="n">{h.fees}</td>
+                <td class="n">{h.net}</td><td class="n">{h.tn}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Diverging
+        label="Ticks per trade at a 60-second hold"
+        min={-4.5}
+        max={3}
+        rows={[
+          { label: 'Gross edge of the signal', value: 2.35, text: '+2.35', kind: 'pos' },
+          { label: 'Spread paid as a taker', value: -2.26, text: '−2.26', kind: 'neg' },
+          { label: 'Exchange fee + turnover tax', value: -3.81, text: '−3.81', kind: 'neg' },
+          { label: 'Net per trade', value: -3.72, text: '−3.72', kind: 'net' },
+        ]}
+      >
+        <b>Figure 3.</b> The best hold, decomposed. Hit rates sit near 50%: the gross edge comes from larger moves
+        in the signalled direction, not from being right more often.
+      </Diverging>
+      <div class="callout">
+        <p>
+          The best gross edge, +2.35 ticks, is smaller than fees and tax alone. A maker paying no spread would still
+          lose about 1.5 ticks a trade; a taker loses 3.72 (t = −3.10). To break even the signal would have to be
+          about 2.6 times stronger. The signal lives at 30–60 seconds; the tax needs a holding period over which it
+          has already decayed.
+        </p>
+      </div>
+
+      <h2>What this doesn’t show</h2>
+      <ul>
+        <li>
+          <strong>Sample size.</strong> Four sessions and 6.3 hours of book. The predictive correlations are not
+          significant on their own; the negative net result is.
+        </li>
+        <li>
+          <strong>Book cadence.</strong> Two-second snapshots rule out event-level order-flow imbalance, so the
+          exact aggressor-signed trade flow stands in for it. A faster feed could sharpen the signal; it would not
+          change the cost of trading on it.
+        </li>
+        <li>
+          <strong>One live source.</strong> Bars are cross-checked against a second provider; ticks cannot be.
+        </li>
+        <li>
+          <strong>Capture.</strong> A workstation that sleeps is not a recording host. It lost more sessions than
+          the code did. An always-on machine is the precondition for a larger sample.
+        </li>
+      </ul>
+      <p>
+        The data can’t be redistributed, so the repository ships the recorder, the curation steps, the quality gate
+        and the two study scripts rather than the dataset. <a href={repos.vn30} rel="noopener">Reproduction steps are
+        in the README.</a>
+      </p>
+    </div>
+  </article>
+</BaseLayout>

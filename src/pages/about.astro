@@ -1,0 +1,89 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Awards from '@/components/Awards.astro';
+import { person, record, skills } from '@/data/site';
+---
+
+<BaseLayout
+  title="About · Tung Tran"
+  description="Background, record, skills and certificates of Tung Tran (Tom), Computing Science (Honours) at UTS Sydney and quantitative trading trainee at D+A Strategies."
+>
+  <article class="wrap">
+    <header class="doc-head doc-head--portrait">
+      <div>
+        <h1 class="doc-head__title reveal" style="--i: 0">About</h1>
+        <p class="doc-head__lede reveal" style="--i: 1">
+          Hanoi, then Sydney. Software first, then survey research, then markets. Each step taught me to distrust
+          a number until I knew how it was made.
+        </p>
+      </div>
+      <figure class="portrait reveal" style="--i: 2">
+        <picture>
+          <source srcset="/img/portrait-color-sm.webp 360w, /img/portrait-color.webp 680w" sizes="17rem" type="image/webp" />
+          <img src="/img/portrait-color.jpg" alt="Portrait of Tung Tran" width="680" height="970" fetchpriority="high" />
+        </picture>
+        <figcaption>Tung (Tom) Tran</figcaption>
+      </figure>
+    </header>
+
+    <div class="doc">
+      <p>
+        I grew up in Hanoi and moved to Sydney in 2025 to study Computing Science (Honours) at UTS, majoring in AI
+        and data analytics with a statistics sub-major. My route into quantitative work was indirect. I started as
+        a software engineering intern at an enterprise-software firm in Hanoi, building a document Q&amp;A prototype
+        and a database schema for a million-plus records. Then came survey research with collaborators in Vietnam,
+        the UK and Australia, where I ran the structural-equation models and the checks that decide whether a
+        finding is real. A data-analyst internship in Sydney, with returns, CAPM betas and regressions on real prices,
+        is where markets stopped being an interest and became the work.
+      </p>
+      <p>
+        What I care about is the part of research that usually gets skipped: where the data came from, whether
+        the test could have seen the future, and what the result looks like after costs. My two current studies
+        are built around that: <a href="/projects/vn30-futures">a VN30 futures dataset I record myself</a>, and
+        <a href="/projects/spy-volatility">a volatility model whose training loss is chosen before the test</a>.
+      </p>
+      <p>
+        I’m a quantitative trading trainee at <strong>D+A Strategies</strong>, Europe’s largest student-led quant
+        trading association, working on strategy development, macro research and backtesting with students from
+        Oxford, Cambridge, LSE, UCL, Imperial and Bocconi. I was a finalist in IMC Prosperity 4 (#9 in Vietnam),
+        and since 2022 I’ve run Second Chance, a student group in Hanoi that has raised $10,000 for STEM teaching
+        and rural schools.
+      </p>
+
+      <h2>Record</h2>
+      <ul class="record">
+        {record.map((r) => (
+          <li>
+            <span class="record__when">{r.when}</span>
+            <p class="record__what">{r.what} <span class="record__where">· {r.where}</span></p>
+            <p class="record__note">{r.note}</p>
+          </li>
+        ))}
+      </ul>
+
+      <h2>Skills</h2>
+      <div class="table-scroll">
+        <table class="spec">
+          <tbody>
+            {skills.map((s) => (
+              <tr><th scope="row">{s.group}</th><td>{s.items}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </article>
+
+  <section class="section wrap" id="certificates" aria-labelledby="certificates-title">
+    <h2 id="certificates-title" class="section__title">Certificates</h2>
+    <p class="section__intro">
+      Scans of the originals; select one to open it full size. Not pictured: the UTS Academic Excellence
+      International Scholarship (30% of tuition).
+    </p>
+    <Awards />
+    <p class="awards-foot">
+      The one-page version of all this is the <a href={person.cv}>CV (PDF)</a>. The quickest way to reach me is
+      <a href={`mailto:${person.email}`}>{person.email}</a>.
+    </p>
+  </section>
+</BaseLayout>

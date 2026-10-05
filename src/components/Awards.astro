@@ -1,0 +1,32 @@
+---
+// Certificate gallery. Thumbnails link to the full-size scan.
+import { awards } from '@/data/site';
+
+interface Props {
+  count?: number;
+  lead?: boolean;
+}
+
+const { count = awards.length, lead = false } = Astro.props;
+const items = awards.slice(0, count);
+---
+
+<ul class:list={['awards', { 'awards--lead': lead }]}>
+  {items.map((a) => (
+    <li>
+      <figure class="award">
+        <a class="award__img" href={`/img/awards/${a.slug}.jpg`} aria-label={`${a.title}: open the full certificate`}>
+          <picture>
+            <source srcset={`/img/awards/${a.slug}-sm.webp 640w, /img/awards/${a.slug}.webp ${a.w}w`} sizes="(min-width: 60rem) 30vw, (min-width: 40rem) 45vw, 92vw" type="image/webp" />
+            <img src={`/img/awards/${a.slug}.jpg`} alt={a.alt} width={a.w} height={a.h} loading="lazy" decoding="async" />
+          </picture>
+        </a>
+        <figcaption>
+          <span class="award__title">{a.title}</span>
+          <span class="award__meta">{a.meta}</span>
+          {a.note && <span class="award__note">{a.note}</span>}
+        </figcaption>
+      </figure>
+    </li>
+  ))}
+</ul>

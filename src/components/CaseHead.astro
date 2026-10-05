@@ -1,0 +1,34 @@
+---
+// Head block for a long-document page: back link, title, lede, key facts, links.
+interface Props {
+  title: string;
+  lede: string;
+  meta: [string, string][];
+  links?: { label: string; href: string; primary?: boolean }[];
+  back?: { label: string; href: string };
+}
+
+const { title, lede, meta, links = [], back = { label: '← All research', href: '/projects' } } = Astro.props;
+---
+
+<header class="doc-head">
+  <a class="doc-head__back" href={back.href}>{back.label}</a>
+  <h1 class="doc-head__title reveal" style="--i: 0" data-study-title>{title}</h1>
+  <p class="doc-head__lede reveal" style="--i: 1">{lede}</p>
+  <dl class="doc-head__meta reveal" style="--i: 2">
+    {meta.map(([k, v]) => (
+      <div><dt>{k}</dt><dd>{v}</dd></div>
+    ))}
+  </dl>
+  {links.length > 0 && (
+    <div class="actions">
+      {links.map((l) =>
+        l.primary ? (
+          <a class="chip" href={l.href} rel="noopener">{l.label}</a>
+        ) : (
+          <a class="tlink" href={l.href} rel="noopener">{l.label}</a>
+        )
+      )}
+    </div>
+  )}
+</header>

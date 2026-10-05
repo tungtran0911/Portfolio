@@ -1,0 +1,149 @@
+<script>
+  // Opens <dialog class="sheet"> from any [data-sheet] trigger.
+  // With the View Transitions API the trigger morphs into the panel (or a thumbnail into the
+  // full image); without it, CSS slides the panel in. Reduced motion skips both.
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const root = document.documentElement;
+  let lastTrigger: HTMLElement | null = null;
+  let running = false; // one morph at a time; anything else falls back to a plain open/close
+  const canMorph = () =>
+    'startViewTransition' in document && !reduce.matches && !document.hidden && !running;
+
+  // Run a view transition, and make sure names and flags are cleared even if it never finishes.
+  function morph(update: () => void, cleanup: () => void) {
+    running = true;
+    root.classList.add('vt-run');
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      cleanup();
+      running = false;
+      root.classList.remove('vt-run');
+    };
+    const vt = (document as any).startViewTransition(update);
+    vt.finished.then(finish, finish);
+    setTimeout(finish, 1500);
+  }
+
+  const morphSource = (trigger: HTMLElement) =>
+    (trigger.querySelector<HTMLElement>('[data-morph]') ?? trigger) as HTMLElement;
+  const morphTarget = (dlg: HTMLDialogElement) =>
+    (dlg.querySelector<HTMLElement>('[data-morph-target]') ??
+      dlg.querySelector<HTMLElement>('[data-sheet-panel]')) as HTMLElement;
+
+  function fillLightbox(dlg: HTMLDialogElement, trigger: HTMLElement) {
+    const d = trigger.dataset;
+    if (!d.src) return;
+    const img = dlg.querySelector<HTMLImageElement>('[data-morph-target]');
+    if (img) {
+      img.src = d.src;
+      img.alt = d.alt ?? '';
+      if (d.w && d.h) {
+        img.width = Number(d.w);
+        img.height = Number(d.h);
+      }
+    }
+    const title = dlg.querySelector('[data-sheet-title]');
+    const kicker = dlg.querySelector('[data-sheet-kicker]');
+    const note = dlg.querySelector('[data-sheet-note]');
+    if (title) title.textContent = d.title ?? '';
+    if (kicker) kicker.textContent = d.meta ?? '';
+    if (note) note.textContent = d.note ?? '';
+  }
+
+  function open(trigger: HTMLElement) {
+    const dlg = document.getElementById(`sheet-${trigger.dataset.sheet}`) as HTMLDialogElement | null;
+    if (!dlg || dlg.open) return;
+    lastTrigger = trigger;
+    fillLightbox(dlg, trigger);
+    if (!canMorph()) {
+      dlg.showModal();
+      return;
+    }
+    const src = morphSource(trigger);
+    const dst = morphTarget(dlg);
+    src.style.viewTransitionName = 'sheet-morph';
+    morph(
+      () => {
+        src.style.viewTransitionName = '';
+        dst.style.viewTransitionName = 'sheet-morph';
+        if (!dlg.open) dlg.showModal();
+      },
+      () => {
+        src.style.viewTransitionName = '';
+        dst.style.viewTransitionName = '';
+        if (!dlg.open) dlg.showModal();
+      }
+    );
+  }
+
+  function close(dlg: HTMLDialogElement) {
+    if (!dlg.open) return;
+    const trigger = lastTrigger;
+    const visible = trigger && trigger.getClientRects().length > 0;
+    if (canMorph() && trigger && visible) {
+      const src = morphTarget(dlg);
+      const dst = morphSource(trigger);
+      src.style.viewTransitionName = 'sheet-morph';
+      morph(
+        () => {
+          src.style.viewTransitionName = '';
+          dlg.close();
+          dst.style.viewTransitionName = 'sheet-morph';
+        },
+        () => {
+          src.style.viewTransitionName = '';
+          dst.style.viewTransitionName = '';
+          if (dlg.open) dlg.close();
+          trigger.focus({ preventScroll: true });
+        }
+      );
+      return;
+    }
+    if (reduce.matches) {
+      dlg.close();
+      return;
+    }
+    dlg.classList.add('is-closing');
+    const panel = dlg.querySelector('[data-sheet-panel]');
+    const done = () => {
+      dlg.classList.remove('is-closing');
+      dlg.close();
+    };
+    panel?.addEventListener('animationend', done, { once: true });
+    setTimeout(() => dlg.open && done(), 400);
+  }
+
+  document.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    const trigger = t.closest<HTMLElement>('[data-sheet]');
+    if (trigger) {
+      e.preventDefault();
+      open(trigger);
+      return;
+    }
+    const closer = t.closest('[data-sheet-close]');
+    if (closer) {
+      close(closer.closest('dialog') as HTMLDialogElement);
+      return;
+    }
+    // a click on the dialog itself (outside the panel) is a click on the backdrop
+    if (t instanceof HTMLDialogElement && t.classList.contains('sheet')) close(t);
+  });
+
+  document.querySelectorAll<HTMLDialogElement>('dialog.sheet').forEach((dlg) => {
+    dlg.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      close(dlg);
+    });
+    // in-page links inside a sheet (e.g. the index) close it first, then scroll
+    dlg.addEventListener('click', (e) => {
+      const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
+      if (!a) return;
+      e.preventDefault();
+      dlg.close();
+      document.querySelector(a.getAttribute('href')!)?.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth' });
+    });
+  });
+</script>

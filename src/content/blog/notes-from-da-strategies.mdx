@@ -1,0 +1,45 @@
+---
+title: "Notes from D+A: what student-led prop trading actually looks like"
+description: "First impressions from joining D+A Strategies — Europe's largest student-led quant trading association. The signal, the reading list, and what surprised me most."
+pubDate: 2026-04-26
+tags: ["d+a strategies", "career notes"]
+draft: true
+---
+
+I joined D+A Strategies as a quantitative trading trainee a few weeks ago. The association brings together students from Oxford, Cambridge, LSE, UCL, Imperial, Bocconi, and a long tail of other universities — focused on strategy development, macro research, and backtesting.
+
+A few first impressions, with the caveat that I've only been here a short while.
+
+## What I expected
+
+I expected to mostly read papers and run notebooks. I expected the bar for "quant trading" inside a student association to be substantially lower than at a real prop firm.
+
+## What's actually true
+
+The bar is higher than I expected on the *engineering* side and roughly where I expected on the *finance theory* side.
+
+People don't blink when you mention CVXPY, Ledoit-Wolf shrinkage, or walk-forward analysis. But the conversations about transaction-cost models, market microstructure, and execution algos are noticeably less developed than the conversations about factor research, macro indicators, and backtest methodology.
+
+That makes sense — it's a research-and-strategy association, not a market-making one. But it shaped my mental model of where to invest my time.
+
+## What I'm reading
+
+Stuff I picked up from D+A peers in the first month:
+
+1. **Lopez de Prado — *Advances in Financial Machine Learning*.** Required reading. The chapters on PSR, fractional differentiation, and meta-labeling all changed how I report results.
+2. **Asness, Frazzini, Pedersen — *Quality Minus Junk* (2014).** A clean justification for the quality factor I was previously hand-waving.
+3. **Almgren & Chriss — *Optimal Execution of Portfolio Transactions* (2000).** For when I get serious about transaction costs.
+
+## What surprised me most
+
+How willing senior members are to debate methodology. I posted a backtest claiming Sharpe 0.93 on the [factor portfolio](/projects/quant-factor-portfolio) and got pushed on:
+
+- Sample size — am I statistically distinguishable from luck? (Now reporting PSR.)
+- Survivorship bias — current S&P 500 ≠ historical S&P 500. (Now openly stated.)
+- Sector exposure — was the alpha really cross-sectional, or was it a tech tilt? (Working on GICS neutralization.)
+
+That feedback loop is worth more than the trading content itself.
+
+---
+
+*This post is a draft — I'll refine it as I spend more time inside D+A.*

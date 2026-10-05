@@ -1,0 +1,22 @@
+---
+// Two round icon links, bottom-left of a panel, as in the reference.
+import { person } from '@/data/site';
+---
+
+<ul class="socials">
+  <li>
+    <a href={person.linkedin} rel="noopener" aria-label="LinkedIn">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 9.5v8M6.5 6.2v.1M10.5 17.5v-4.6c0-1.9 1.2-3.1 2.9-3.1s2.6 1.2 2.6 3.1v4.6M10.5 9.5v8" /></svg>
+    </a>
+  </li>
+  <li>
+    <a href={person.github} rel="noopener" aria-label="GitHub">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 19c-4 1.3-4-2-6-2.5M15 21v-3.4a3 3 0 0 0-.8-2.3c2.7-.3 5.5-1.3 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.3 4.3 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6 0C6.5 2.6 5.5 2.9 5.5 2.9a4.3 4.3 0 0 0-.1 3.2A4.6 4.6 0 0 0 4.1 9.3c0 4.6 2.8 5.6 5.5 6a3 3 0 0 0-.8 2.3V21" /></svg>
+    </a>
+  </li>
+  <li>
+    <a href={`mailto:${person.email}`} aria-label="Email">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5h17v11h-17zM3.5 7l8.5 6 8.5-6" /></svg>
+    </a>
+  </li>
+</ul>

@@ -1,0 +1,180 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CaseHead from '@/components/CaseHead.astro';
+import VolCrashChart from '@/components/charts/VolCrashChart.astro';
+import { repos } from '@/data/site';
+
+// Every number below is printed by notebooks/A2_main.py in vol-har-conformal (re-run 2026-09-28).
+const results = [
+  { model: 'Naive (tomorrow = today)', qlike: '0.8205', mse: '28.60', ratio: '1.821', dm: '8.65', p: '< 0.001' },
+  { model: 'Simple linear regression', qlike: '0.5270', mse: '29.40', ratio: '0.992', dm: '6.05', p: '< 0.001' },
+  { model: 'HAR, fitted by OLS', qlike: '0.4483', mse: '28.31', ratio: '0.993', dm: '1.95', p: '0.051' },
+  { model: 'HAR, log-OLS', qlike: '0.5525', mse: '25.10', ratio: '1.583', dm: '6.55', p: '< 0.001' },
+  { model: 'HAR, log-OLS + Jensen correction', qlike: '0.4327', mse: '22.30', ratio: '1.079', dm: '−0.06', p: '0.955' },
+  { model: 'HAR, trained on QLIKE', qlike: '0.4329', mse: '21.22', ratio: '1.047', dm: 'ref.', p: 'ref.', best: true },
+  { model: 'GARCH(1,1)', qlike: '0.4627', mse: '19.20', ratio: '1.089', dm: '2.46', p: '0.014' },
+];
+
+const years = [
+  ['2020', '0.6610', '0.6310', '0.6307'],
+  ['2021', '0.4530', '0.4422', '0.5388'],
+  ['2022', '0.3707', '0.3646', '0.3655'],
+  ['2023', '0.3105', '0.2992', '0.3088'],
+  ['2024', '0.4531', '0.4474', '0.4571'],
+  ['2025', '0.4813', '0.4485', '0.4931'],
+  ['2026', '0.3849', '0.3757', '0.4323'],
+];
+---
+
+<BaseLayout
+  title="SPY volatility: a HAR model trained on QLIKE · Tung Tran"
+  description="Forecasting tomorrow's SPY variance, from simple linear regression to a log-link HAR model trained on QLIKE by from-scratch gradient descent. Test QLIKE −47% vs naive and −6% vs GARCH(1,1), Diebold–Mariano p = 0.014."
+>
+  <article class="wrap">
+    <CaseHead
+      title="SPY volatility: a HAR model trained on the loss that matters"
+      lede="Forecasting tomorrow’s SPY variance, one change at a time, from simple linear regression to a HAR model trained on QLIKE. Then one test, on 2020 to 2026, against a naive forecast and GARCH(1,1)."
+      meta={[
+        ['Period', 'Aug – Sep 2026'],
+        ['Context', 'UTS Machine Learning (32513)'],
+        ['Data', 'SPY daily OHLC, 2005 – Aug 2026'],
+        ['Stack', 'Python, NumPy, SciPy, pandas, Colab'],
+      ]}
+      links={[
+        { label: 'Open the notebook ↗', href: repos.volColab, primary: true },
+        { label: 'Code ↗', href: repos.vol },
+      ]}
+    />
+
+    <div class="doc">
+      <h2>Target and loss</h2>
+      <p>
+        Daily variance isn’t observed, so the target is a proxy built from open, high, low and close: the squared
+        overnight gap plus the Garman–Klass range estimator.
+      </p>
+      <pre><code>v_t = (ln O_t − ln C_t−1)² + ½(ln H_t − ln L_t)² − (2 ln 2 − 1)(ln C_t − ln O_t)²</code></pre>
+      <p>
+        The loss is QLIKE, the mean of y/ŷ − ln(y/ŷ) − 1. MSE on variance is dominated by a handful of crash days;
+        QLIKE depends only on the ratio of actual to forecast, and it ranks forecasts consistently even when the
+        target is a noisy proxy (Patton, 2011). MSE is still reported, because it disagrees. See below.
+      </p>
+
+      <h2>One change at a time</h2>
+      <div class="table-scroll">
+        <table class="spec">
+          <caption>Table 1. Each step changes one thing (inputs, loss or optimiser), so its effect can be measured.</caption>
+          <thead><tr><th>Step</th><th>Inputs</th><th>Loss</th><th>Fitted by</th></tr></thead>
+          <tbody>
+            <tr><td>1. Simple regression</td><td>today’s variance</td><td>MSE</td><td>OLS</td></tr>
+            <tr><td>2. HAR</td><td>daily, weekly, monthly variance</td><td>MSE</td><td>OLS</td></tr>
+            <tr><td>3. HAR + QLIKE</td><td>same, in logs, log link</td><td>QLIKE</td><td>gradient descent, from scratch</td></tr>
+            <tr><td>4. Tuning</td><td>training-window length W</td><td>QLIKE</td><td>grid search on 2017–19</td></tr>
+            <tr><td>5. Test</td><td>2020-01 to 2026-08, refit daily</td><td>QLIKE, MSE</td><td>vs naive and GARCH(1,1)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Gradient descent, and the bound it has to respect</h2>
+      <p>
+        QLIKE with a log link has no closed form, so step 3 is fitted by gradient descent written in NumPy. For a
+        locally quadratic loss, gradient descent is stable only when the step size η is below 2/λ<sub>max</sub>,
+        where λ<sub>max</sub> is the largest eigenvalue of the Hessian at the minimum. Here λ<sub>max</sub> = 2.78,
+        so the bound is η &lt; 0.718.
+      </p>
+      <div class="callout">
+        <p>
+          At η = 0.70 the fit converges in 227 iterations (training QLIKE 0.3669). At η = 0.72, just 0.002 past
+          the bound, it diverges to NaN.
+        </p>
+      </div>
+
+      <h2>A split with no way to peek</h2>
+      <p>
+        The data are split on the date of the <em>target</em>, so no training label falls inside a later period:
+        training up to 2016, validation 2017–2019, test January 2020 to August 2026: 5.4k trading days in all,
+        never shuffled. The training-window length was chosen on validation QLIKE only. The test years were used
+        once, with every model refit each day on the data it could have seen: 1,674 forecasts, the COVID-19 crash
+        included.
+      </p>
+
+      <VolCrashChart showOls>
+        <b>Figure 1.</b> Next-day forecasts through the 2020 crash. The OLS-fitted HAR overshoots: on 17 March its
+        weekly term alone contributed 98 of a 136 %² forecast, or 185% annualised against 88% realised. The
+        QLIKE-trained model, which penalises the ratio rather than the squared gap, stays closer to GARCH.
+      </VolCrashChart>
+
+      <h2>Results</h2>
+      <div class="table-scroll">
+        <table class="spec">
+          <caption>
+            Table 2. Test period, 1,674 days. DM: Diebold–Mariano t-statistic on daily QLIKE differences against
+            the QLIKE-trained HAR (7 lags, autocorrelation-robust); positive means the QLIKE model is better. Actual ÷
+            forecast near 1 means the level is right.
+          </caption>
+          <thead>
+            <tr><th>Model</th><th class="n">QLIKE</th><th class="n">MSE</th><th class="n">Actual ÷ forecast</th><th class="n">DM t</th><th class="n">p</th></tr>
+          </thead>
+          <tbody>
+            {results.map((r) => (
+              <tr class:list={{ 'is-best': r.best }}>
+                <td>{r.model}</td><td class="n">{r.qlike}</td><td class="n">{r.mse}</td><td class="n">{r.ratio}</td>
+                <td class="n">{r.dm}</td><td class="n">{r.p}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The QLIKE-trained HAR cuts test QLIKE <strong>47% against the naive forecast</strong> and <strong>6%
+        against GARCH(1,1)</strong>, and the GARCH gap survives the Diebold–Mariano test (p = 0.014). Against the
+        OLS-fitted HAR the gain is borderline (p = 0.051).
+      </p>
+      <p>
+        Two results argue against over-reading it. First, a log-OLS fit with a Jensen bias correction reaches the
+        same loss (0.4327, p = 0.955): the gain comes from the log link and the level correction, not from
+        gradient descent as such. Second, <strong>on MSE, GARCH wins</strong> (19.20 against 21.22), because the
+        ten worst days, all in March 2020, make up 79–86% of the test MSE of GARCH and both HARs. Which model is “best”
+        depends on the loss you choose, which is why the loss has to be chosen before the test.
+      </p>
+
+      <div class="table-scroll">
+        <table class="spec">
+          <caption>Table 3. Test QLIKE by calendar year. The QLIKE-trained HAR beats the OLS-fitted HAR in 7 of 7 years and GARCH in 6 of 7; GARCH edges 2020 by 0.0003.</caption>
+          <thead><tr><th>Year</th><th class="n">HAR, OLS</th><th class="n">HAR, QLIKE</th><th class="n">GARCH(1,1)</th></tr></thead>
+          <tbody>
+            {years.map(([y, a, b, c]) => (
+              <tr><td class="num">{y}</td><td class="n">{a}</td><td class="n">{b}</td><td class="n">{c}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Does it help with risk?</h2>
+      <p>
+        The task behind the forecast is a one-day 99% value-at-risk: a loss threshold that should be breached on
+        1% of days. Using each forecast with a normal quantile, the QLIKE-trained HAR is breached on
+        <strong>1.79% of test days</strong> (30 days) against <strong>2.15% for GARCH</strong> (36). The OLS-fitted
+        HAR does slightly better on this count (1.67%), and every model misses the 1% target. The normal
+        distribution understates daily tails. A fatter-tailed or empirically calibrated quantile is the obvious
+        next step.
+      </p>
+
+      <h2>Limits</h2>
+      <ul>
+        <li>One asset at one horizon. Nothing here says the ranking carries to single stocks or intraday data.</li>
+        <li>
+          The proxy is noisy. In simulation, Garman–Klass on minute-sampled prices averages 0.91 of the true
+          variance. It misses part of the range.
+        </li>
+        <li>
+          The 6% gain over GARCH is real but small, and the MSE ranking reverses it. It is a better forecaster under
+          one well-motivated loss, not a better model under every loss.
+        </li>
+      </ul>
+      <p>
+        The notebook runs top to bottom in about a minute on a fixed data snapshot, and prints every number on this
+        page. <a href={repos.volColab} rel="noopener">Open it in Colab.</a>
+      </p>
+    </div>
+  </article>
+</BaseLayout>

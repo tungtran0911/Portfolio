@@ -1,0 +1,44 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { person } from '@/data/site';
+
+const channels = [
+  { label: 'Email', value: person.email, href: `mailto:${person.email}`, note: 'Best for internships, research questions and anything longer than a line.' },
+  { label: 'LinkedIn', value: 'linkedin.com/in/thanhtung0911', href: person.linkedin, note: 'For recruiting and industry conversations.' },
+  { label: 'GitHub', value: 'github.com/tungtran0911', href: person.github, note: 'Code for every study on this site.' },
+  { label: 'CV', value: 'One page, PDF', href: person.cv, note: 'Education, research, experience and projects.' },
+];
+---
+
+<BaseLayout
+  title="Contact · Tung Tran"
+  description="How to reach Tung Tran about quant trading, research and data internships."
+>
+  <article class="wrap">
+    <header class="doc-head">
+      <h1 class="doc-head__title reveal" style="--i: 0">Contact</h1>
+      <p class="doc-head__lede reveal" style="--i: 1">
+        I’m looking for quantitative trading, research and data internships. I read every email and reply within
+        a couple of days. Based in Sydney.
+      </p>
+    </header>
+
+    <div class="doc">
+      <div class="table-scroll">
+        <table class="spec">
+          <tbody>
+            {channels.map((c) => (
+              <tr>
+                <th scope="row">{c.label}</th>
+                <td>
+                  <a href={c.href} rel={c.href.startsWith('http') ? 'noopener' : undefined}>{c.value}</a>
+                  <br /><span class="muted">{c.note}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </article>
+</BaseLayout>

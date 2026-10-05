@@ -1,0 +1,16 @@
+---
+// Ft4 dense colophon: one mono block: contact, method, build facts.
+import { person } from '@/data/site';
+const built = new Date().toISOString().slice(0, 10);
+---
+
+<footer class="colophon wrap">
+  <hr class="rule-double" aria-hidden="true" />
+  <p class="colophon__block">
+    Tung Tran (Tom), {person.location}. Reach me at <a href={`mailto:${person.email}`}>{person.email}</a>,
+    on <a href={person.linkedin} rel="noopener">LinkedIn</a> or <a href={person.github} rel="noopener">GitHub</a>;
+    the <a href={person.cv}>CV is a PDF</a>. Every chart on this site is drawn from data exported from the linked
+    repositories; the research studies report results out of sample, after costs where costs apply. Set in Urbanist,
+    Mulish and Geist Mono. Static site, built with Astro; no trackers, no cookies. Last build {built}.
+  </p>
+</footer>

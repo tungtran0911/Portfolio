@@ -1,0 +1,44 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout
+  title="Notes · Tung Tran"
+  description="Short notes on quant research, backtesting traps and statistical testing."
+>
+  <section class="wrap doc-head">
+    <h1 class="doc-head__title">Notes</h1>
+    <p class="doc-head__lede">
+      Short writing on backtesting traps, testing, and what I’m reading. Longer work lives under
+      <a href="/projects">Research</a>.
+    </p>
+  </section>
+
+  <section class="wrap" style="padding-bottom: var(--space-3xl)">
+    {posts.length === 0 ? (
+      <p class="muted">No notes yet.</p>
+    ) : (
+      <ul class="index">
+        {posts.map((post) => (
+          <li>
+            <a class="index__row" href={`/blog/${post.slug}`}>
+              <time class="index__when" datetime={post.data.pubDate.toISOString()}>
+                {post.data.pubDate.toISOString().slice(0, 10)}
+              </time>
+              <span>
+                <span class="index__title">{post.data.title}</span>
+                <span class="index__desc">{post.data.description}</span>
+              </span>
+              <span class="index__tags">{post.data.tags.join(' · ')}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+</BaseLayout>

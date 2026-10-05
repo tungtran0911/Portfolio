@@ -1,0 +1,425 @@
+---
+import '@/styles/home.css';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Sheet from '@/components/home/Sheet.astro';
+import HeroBust from '@/components/home/HeroBust.astro';
+import SpikeTile from '@/components/home/SpikeTile.astro';
+import MiniCost from '@/components/home/MiniCost.astro';
+import Socials from '@/components/home/Socials.astro';
+import Bars from '@/components/charts/Bars.astro';
+import Diverging from '@/components/charts/Diverging.astro';
+import { person, repos, experience, awards, homeSections } from '@/data/site';
+
+// neg = bad for me (coral), good = an improvement (ice). Every value is in the CV or a linked repository.
+const ticker: { k: string; v: string; neg?: boolean; good?: boolean }[] = [
+  { k: 'WAM', v: '90.25' },
+  { k: 'GPA', v: '6.88 / 7' },
+  { k: 'DEAN’S LIST', v: '2026' },
+  { k: 'IMC PROSPERITY 4', v: 'FINALIST · #9 VN' },
+  { k: 'QLIKE VS NAIVE', v: '−47%', good: true },
+  { k: 'QLIKE VS GARCH', v: '−6%', good: true },
+  { k: 'DIEBOLD–MARIANO', v: 'p = 0.014' },
+  { k: 'VN30F NET / TRADE', v: '−3.72 TICKS', neg: true },
+  { k: 't-STAT', v: '−3.10', neg: true },
+  { k: 'TRADES RECORDED', v: '320K+' },
+  { k: 'TESTS PASSING', v: '43' },
+  { k: 'HIGH DISTINCTIONS', v: '7 OF 8' },
+];
+
+---
+
+<BaseLayout bare>
+  <script is:inline>document.documentElement.classList.add('js');</script>
+
+  <div class="home">
+    <nav class="dots" aria-label="Panels">
+      <ol>
+        {homeSections.map((s) => (
+          <li><a href={`#${s.id}`} data-dot={s.id}><span class="sr-only">{s.label}</span></a></li>
+        ))}
+      </ol>
+    </nav>
+
+    <!-- Home -->
+    <section id="home" class="panel" aria-labelledby="home-title">
+      <div class="pgrid">
+        <div>
+          <p class="mono-label reveal" style="--i: 0">Quant research · Time series</p>
+          <h1 id="home-title" class="ptitle ptitle--hero reveal" style="--i: 1"><span>Tung</span><span>Tran</span></h1>
+          <div class="ptext reveal" style="--i: 2">
+            <p>I study markets as <span class="hl">time series</span>. Volatility, order flow, and the cost of trading.</p>
+            <p><b>Computing Science (Honours)</b> at UTS. <b>Quant Trading Trainee</b> at D+A Strategies.</p>
+          </div>
+          <div class="pactions reveal" style="--i: 3">
+            <a class="pill" href="#research">See my research</a>
+            <button class="pill pill--ghost" type="button" data-sheet="story">My story</button>
+          </div>
+          <div class="pfoot reveal" style="--i: 4">
+            <Socials />
+            <span class="status">Open to collaboration</span>
+          </div>
+        </div>
+        <div class="reveal" style="--i: 2"><HeroBust /></div>
+      </div>
+    </section>
+
+    <div class="ticker glass-surface" aria-label="Key numbers">
+      <div class="ticker__track">
+        {[0, 1].map((copy) => (
+          <ul aria-hidden={copy === 1 ? 'true' : undefined}>
+            {ticker.map(({ k, v, neg, good }) => (
+              <li><span>{k}</span><b class:list={{ neg, hl: good }}>{v}</b></li>
+            ))}
+          </ul>
+        ))}
+      </div>
+    </div>
+
+    <!-- About -->
+    <section id="about" class="panel" aria-labelledby="about-title">
+      <div class="pgrid">
+        <div>
+          <h2 id="about-title" class="ptitle rv">About me</h2>
+          <div class="ptext rv">
+            <p>I grew up in Hanoi. I moved to Sydney in 2025.</p>
+            <p>I started in software. Then survey research. Then markets.</p>
+            <p>What I love most is <span class="hl">time series</span>. Data that moves, and models that have to keep up.</p>
+            <p>I build the data myself, test out of sample, and keep the results that fail.</p>
+            <p>I am always open to building with others.</p>
+          </div>
+          <div class="pactions rv">
+            <button class="pill pill--ghost" type="button" data-sheet="story">Read my story</button>
+            <a class="pill pill--ghost" href={person.cv}>Download CV</a>
+          </div>
+        </div>
+        <figure class="rv" style="--d: 1; margin: 0">
+          <SpikeTile />
+          <figcaption class="visual-cap">
+            <span class="mono-label">SPY · 2020</span>
+            <span class="mono-label">The spike breaks the frame. Cyan is my forecast.</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Interlude: toolkit -->
+    <section id="toolkit" class="interlude" aria-labelledby="toolkit-title">
+      <h2 id="toolkit-title" class="interlude__word rv">Toolkit</h2>
+      <ul class="specimen">
+        <li class="rv">
+          <span class="specimen__glyph" aria-hidden="true">∑</span>
+          <span class="specimen__name">Mathematics</span>
+          <span class="specimen__list">Statistics sub-major. Mathematics 2 (95). Hypothesis tests, bootstrap, PLS-SEM.</span>
+        </li>
+        <li class="rv" style="--d: 1">
+          <span class="specimen__glyph" aria-hidden="true">λ</span>
+          <span class="specimen__name">Computer Science</span>
+          <span class="specimen__list">Programming 2 (97). Python, C++, Java, SQL, pytest, Docker.</span>
+        </li>
+        <li class="rv" style="--d: 2">
+          <span class="specimen__glyph" aria-hidden="true">β</span>
+          <span class="specimen__name">Economics &amp; Finance</span>
+          <span class="specimen__list">CAPM, market microstructure, transaction costs, value at risk.</span>
+        </li>
+      </ul>
+      <ul class="vbars rv" style="--d: 3" aria-hidden="true">
+        <li>HAR · GARCH · QLIKE</li>
+        <li>Gradient descent</li>
+        <li>Order flow · costs</li>
+      </ul>
+    </section>
+
+    <!-- Research -->
+    <section id="research" class="panel" aria-labelledby="research-title">
+      <div class="pgrid">
+        <div>
+          <h2 id="research-title" class="ptitle rv">Research</h2>
+          <div class="ptext rv"><p>Two studies. Real data. Out-of-sample tests. Honest results.</p></div>
+          <div class="rcards">
+            <button class="rcard rv" type="button" data-sheet="vn30">
+              <span class="rcard__meta">Aug 2026 → now · Personal research</span>
+              <span class="rcard__title" data-study-src="vn30-futures">VN30 index futures</span>
+              <span class="rcard__sub">Does order flow beat Vietnam’s turnover tax?</span>
+              <span class="rcard__foot">
+                <span><b class="neg">−3.72</b> ticks net · t = −3.10</span>
+                <span class="rcard__open">Open →</span>
+              </span>
+            </button>
+            <button class="rcard rv" style="--d: 1" type="button" data-sheet="vol">
+              <span class="rcard__meta">Aug → Sep 2026 · UTS Machine Learning</span>
+              <span class="rcard__title" data-study-src="spy-volatility">SPY volatility</span>
+              <span class="rcard__sub">A HAR model trained on the loss that matters.</span>
+              <span class="rcard__foot">
+                <span><b class="hl">−47%</b> QLIKE vs naive</span>
+                <span class="rcard__open">Open →</span>
+              </span>
+            </button>
+          </div>
+          <p class="earlier rv">
+            <span>Earlier</span>
+            <a href="/projects/quant-factor-portfolio" data-study-src="quant-factor-portfolio">Quant factor portfolio</a>
+            <a href="/projects/finlab" data-study-src="finlab">FinLab</a>
+            <a href="/blog/why-sharpe-ratio-lies">Why the Sharpe ratio lies</a>
+            <a href="/projects">All research →</a>
+          </p>
+        </div>
+        <figure class="rv" style="--d: 1; margin: 0">
+          <div class="tile glass-surface"><MiniCost /></div>
+          <figcaption class="visual-cap">
+            <span class="mono-label">VN30F · ticks per trade</span>
+            <span class="mono-label">The edge is real. The tax is bigger.</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Experience -->
+    <section id="experience" class="panel" aria-labelledby="xp-title">
+      <h2 id="xp-title" class="ptitle rv">Experience</h2>
+      <div class="ptext rv"><p>Research, quant and industry. Open a row for details.</p></div>
+      <ol class="xp glass-surface rv" style="margin-top: var(--space-xl)">
+        {experience.map((e) => (
+          <li>
+            <button class="xp__row" type="button" data-sheet={`xp-${e.id}`}>
+              <span class="xp__when">{e.when}</span>
+              <span class="xp__org">{e.org}</span>
+              <span class="xp__role">{e.role}</span>
+              <span class="xp__tag">{e.tag}</span>
+              <span class="xp__plus" aria-hidden="true">+</span>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <!-- Awards -->
+    <section id="awards" class="panel" aria-labelledby="awards-title">
+      <h2 id="awards-title" class="ptitle rv">Recognition</h2>
+      <div class="ptext rv">
+        <p>Scans of the originals. Hover to pause, click to open one full size.</p>
+      </div>
+      <div class="awards-marquee rv" aria-label="Certificates, moving strip. Hover to pause.">
+        <div class="awards-marquee__track">
+          {[0, 1].map((copy) => (
+            <ul aria-hidden={copy === 1 ? 'true' : undefined}>
+              {awards.map((a) => (
+                <li style={`--ratio: ${(a.w / a.h).toFixed(3)}`}>
+                  <button
+                    class="cert"
+                    type="button"
+                    tabindex={copy === 1 ? -1 : undefined}
+                    data-sheet="cert"
+                    data-src={`/img/awards/${a.slug}.jpg`}
+                    data-w={a.w}
+                    data-h={a.h}
+                    data-alt={a.alt}
+                    data-title={a.title}
+                    data-meta={a.meta}
+                    data-note={a.note}
+                  >
+                    <span class="cert__img">
+                      <picture>
+                        <source srcset={`/img/awards/${a.slug}-sm.webp`} type="image/webp" />
+                        <img data-morph src={`/img/awards/${a.slug}.jpg`} alt={copy === 1 ? '' : a.alt} width={a.w} height={a.h} decoding="async" />
+                      </picture>
+                    </span>
+                    <span class="cert__title">{a.title}</span>
+                    <span class="cert__meta">{a.meta}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+      <p class="earlier">Not pictured: UTS Academic Excellence International Scholarship (30%).</p>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="panel" aria-labelledby="contact-title">
+      <div class="pgrid">
+        <div>
+          <h2 id="contact-title" class="ptitle rv">Let’s build something together.</h2>
+          <div class="ptext rv">
+            <p>Open to collaboration. Research, competitions, side projects, internships.</p>
+            <p>I don’t mind locking horns with a hard problem.</p>
+          </div>
+          <a class="contact__email rv" href={`mailto:${person.email}`}>{person.email}</a>
+          <div class="pactions rv">
+            <a class="pill" href={`mailto:${person.email}`}>Write to me</a>
+            <a class="pill pill--ghost" href={person.cv}>CV (PDF)</a>
+          </div>
+          <div class="pfoot rv">
+            <Socials />
+            <span class="status">Based in Sydney</span>
+          </div>
+        </div>
+        <figure class="together rv" style="--d: 1">
+          <span class="together__ring" aria-hidden="true"></span>
+          <picture>
+            <source srcset="/img/together-sm.webp 620w, /img/together.webp 1240w" sizes="(min-width: 60rem) 34vw, 92vw" type="image/webp" />
+            <img src="/img/together.jpg" alt="Tung bracing his head against the horns of a life-size triceratops model." width="1240" height="1005" loading="lazy" decoding="async" />
+          </picture>
+          <figcaption class="visual-cap">
+            <span class="mono-label">Fig. ∞</span>
+            <span class="mono-label">Hard problem, head first.</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <aside class="glass rv" aria-label="Contact card">
+      <p class="glass__line">{person.email}</p>
+      <p class="glass__small">Sydney · © 2026 Tung Tran · Built with Astro, no trackers</p>
+    </aside>
+  </div>
+
+  <!-- ===== sheets ===== -->
+
+
+  <Sheet id="story" title="Hanoi → Sydney" kicker="My story">
+    <img class="sheet__portrait" src="/img/portrait-color-sm.jpg" alt="Portrait of Tung Tran" width="360" height="514" loading="lazy" />
+    <p>I grew up in Hanoi. In 2025 I moved to Sydney to study Computing Science (Honours) at UTS.</p>
+    <p>I started in software. At Apatek I built a document Q&amp;A chatbot and a database for a million records.</p>
+    <p>Then I joined survey research across Vietnam, the UK and Australia. I ran the models and the checks that decide if a finding is real.</p>
+    <p>A data internship at Ededge put real prices in front of me. Returns, betas, regressions. I was hooked.</p>
+    <p>Now I study markets as time series. Volatility forecasting at UTS. Order flow in Vietnam’s index futures. Strategy and backtesting at D+A Strategies.</p>
+    <p>Outside research I run Second Chance. We raised $10,000 for STEM teaching and rural schools.</p>
+    <p class="sheet__lead">What I want next: harder data, better questions, and people to build with.</p>
+    <div class="sheet__actions">
+      <a class="pill" href={`mailto:${person.email}`}>Say hello</a>
+      <a class="pill pill--ghost" href="/about">Full background</a>
+    </div>
+  </Sheet>
+
+  <Sheet id="vn30" title="VN30 index futures" kicker="Personal research · Aug 2026 → now" study="vn30-futures">
+    <p class="sheet__lead">Does order flow predict Vietnam’s index futures? And does the edge survive the tax?</p>
+    <ul>
+      <li>No public tick data exists, so I built the recorder. 320k+ trades, 8 years of bars, 43 tests.</li>
+      <li>A volume check against the exchange caught a bug that inflated one session 1.5×.</li>
+      <li>Trade-flow imbalance, tested with block-bootstrap intervals and a leave-one-session-out rule.</li>
+      <li>The edge is real. The tax is bigger. The signal would need to be 2.6× stronger.</li>
+    </ul>
+    <dl class="stats">
+      <div><dt>gross ticks per trade</dt><dd>+2.35</dd></div>
+      <div><dt>spread + fees + tax</dt><dd>6.07</dd></div>
+      <div><dt>net, t = −3.10</dt><dd class="neg">−3.72</dd></div>
+      <div><dt>contract rolls adjusted</dt><dd>97</dd></div>
+    </dl>
+    <Diverging
+      label="Ticks per trade at a 60-second hold"
+      min={-4.5}
+      max={3}
+      rows={[
+        { label: 'Gross edge of the signal', value: 2.35, text: '+2.35', kind: 'pos' },
+        { label: 'Spread paid as a taker', value: -2.26, text: '−2.26', kind: 'neg' },
+        { label: 'Exchange fee + turnover tax', value: -3.81, text: '−3.81', kind: 'neg' },
+        { label: 'Net per trade', value: -3.72, text: '−3.72', kind: 'net' },
+      ]}
+    >
+      Ticks per trade at the best hold, 60 seconds, 131 out-of-sample trades.
+    </Diverging>
+    <div class="sheet__actions">
+      <a class="pill" href="/projects/vn30-futures">Read the full study</a>
+      <a class="pill pill--ghost" href={repos.vn30} rel="noopener">Code ↗</a>
+    </div>
+  </Sheet>
+
+  <Sheet id="vol" title="SPY volatility" kicker="UTS Machine Learning · Aug → Sep 2026" study="spy-volatility">
+    <p class="sheet__lead">Can a simple model, trained on the right loss, beat GARCH?</p>
+    <ul>
+      <li>Built up from linear regression to a log-link HAR model trained on QLIKE.</li>
+      <li>Gradient descent from scratch. Derived the step-size bound η &lt; 2/λ<sub>max</sub> and checked it.</li>
+      <li>Chronological split on 5.4k days. Refit daily over a 1,674-day test, COVID crash included.</li>
+      <li>The gain over GARCH is small. The Diebold–Mariano test says it is not noise.</li>
+    </ul>
+    <dl class="stats">
+      <div><dt>test QLIKE vs naive</dt><dd>−47%</dd></div>
+      <div><dt>vs GARCH(1,1), p = 0.014</dt><dd>−6%</dd></div>
+      <div><dt>years beating MSE-trained</dt><dd>7/7</dd></div>
+      <div><dt>99% VaR breaches (GARCH 2.15%)</dt><dd>1.79%</dd></div>
+    </dl>
+    <Bars
+      label="Test QLIKE by model, lower is better"
+      rows={[
+        { label: 'Naive (tomorrow = today)', value: 0.8205 },
+        { label: 'Simple linear regression', value: 0.527 },
+        { label: 'GARCH(1,1)', value: 0.4627 },
+        { label: 'HAR, fitted by OLS', value: 0.4483 },
+        { label: 'HAR, trained on QLIKE', value: 0.4329, best: true },
+      ]}
+    >
+      Test QLIKE, Jan 2020 to Aug 2026, lower is better. Selected models.
+    </Bars>
+    <div class="sheet__actions">
+      <a class="pill" href="/projects/spy-volatility">Read the full study</a>
+      <a class="pill pill--ghost" href={repos.volColab} rel="noopener">Notebook ↗</a>
+      <a class="pill pill--ghost" href={repos.vol} rel="noopener">Code ↗</a>
+    </div>
+  </Sheet>
+
+  {experience.map((e) => (
+    <Sheet id={`xp-${e.id}`} title={e.role} kicker={`${e.when} · ${e.place}`}>
+      <p class="sheet__lead">{e.org}</p>
+      <ul>
+        {e.bullets.map((b) => <li>{b}</li>)}
+      </ul>
+    </Sheet>
+  ))}
+
+  <Sheet id="cert" title={awards[0].title} kicker={awards[0].meta} variant="lightbox">
+    <img class="lightbox__img" data-morph-target src={`/img/awards/${awards[0].slug}.jpg`} alt="" width={awards[0].w} height={awards[0].h} />
+    <p data-sheet-note></p>
+  </Sheet>
+
+
+  <script>
+    // reveal once on entry
+    const rv = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-in');
+            rv.unobserve(e.target);
+          }
+        }
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+    );
+    document.querySelectorAll('.rv').forEach((el) => rv.observe(el));
+
+    // the dots and the top bar follow the section you are reading: the last one whose top has passed 40% of the screen
+    const ids = [...document.querySelectorAll<HTMLAnchorElement>('[data-dot]')].map((a) => a.dataset.dot!);
+    const sections = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-dot], .topnav .phead__nav a')];
+    let current = '';
+    const update = () => {
+      const line = window.innerHeight * 0.4;
+      const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      let id = sections[0]?.id ?? '';
+      for (const sec of sections) if (sec.getBoundingClientRect().top <= line) id = sec.id;
+      if (atEnd) id = sections[sections.length - 1]?.id ?? id;
+      if (id === current) return;
+      current = id;
+      for (const a of links) {
+        const target = a.dataset.dot ?? a.getAttribute('href')?.replace('#', '');
+        if (target === id) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      }
+    };
+    let ticking = false;
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          update();
+          ticking = false;
+        });
+      },
+      { passive: true }
+    );
+    update();
+  </script>
+</BaseLayout>

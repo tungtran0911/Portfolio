@@ -1,0 +1,33 @@
+---
+// Four bars around zero: the VN30 signal's gross edge and what trading it costs (ticks per trade).
+const rows = [
+  { label: 'gross', v: 2.35, cls: 'bar-pos' },
+  { label: 'spread', v: -2.26, cls: 'bar-cost' },
+  { label: 'fees+tax', v: -3.81, cls: 'bar-cost' },
+  { label: 'net', v: -3.72, cls: 'bar-net' },
+];
+const W = 360;
+const H = 170;
+const zero = 66;
+const unit = 20; // px per tick
+const bw = 56;
+const gap = (W - rows.length * bw) / (rows.length + 1);
+---
+
+<span class="mini">
+  <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
+    {rows.map((r, i) => {
+      const x = gap + i * (bw + gap);
+      const h = Math.abs(r.v) * unit;
+      const y = r.v >= 0 ? zero - h : zero;
+      return (
+        <g>
+          <rect class={r.cls} x={x} y={y} width={bw} height={h} />
+          <text x={x + bw / 2} y={r.v >= 0 ? y - 6 : y + h + 15} text-anchor="middle">{r.v > 0 ? '+' : '−'}{Math.abs(r.v).toFixed(2)}</text>
+          <text x={x + bw / 2} y={r.v >= 0 ? zero + 16 : zero - 6} text-anchor="middle">{r.label}</text>
+        </g>
+      );
+    })}
+    <line class="zero" x1="0" x2={W} y1={zero} y2={zero} />
+  </svg>
+</span>

@@ -1,0 +1,32 @@
+---
+// N6 masthead, set left: wordmark + link row, a mono "issue line", double rule.
+const { pathname } = Astro.url;
+const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+
+const links = [
+  { href: '/projects', label: 'Research' },
+  { href: '/blog', label: 'Notes' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+
+const updated = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+---
+
+<header class="mast wrap">
+  <div class="mast__top">
+    <a class="mast__name" href="/" aria-current={pathname === '/' ? 'page' : undefined}>Tung Tran</a>
+    <nav class="mast__nav" aria-label="Primary">
+      <ul>
+        {links.map((l) => (
+          <li>
+            <a href={l.href} aria-current={isActive(l.href) ? 'page' : undefined}>{l.label}</a>
+          </li>
+        ))}
+        <li><a href="/cv.pdf">CV (PDF)</a></li>
+      </ul>
+    </nav>
+  </div>
+  <p class="mast__line">Quantitative research notes · Sydney · updated {updated}</p>
+  <hr class="rule-double" aria-hidden="true" />
+</header>

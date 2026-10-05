@@ -1,0 +1,51 @@
+---
+// Portrait as a bust: the cut-out sits in a disc and the head breaks out of the top edge.
+// Clip = the disc, plus a column above its centre that is just wide enough for the head.
+// μ, σ, ρ orbit the ring like the planets in the reference.
+const W = 600;
+const H = 700;
+const cx = 300;
+const cy = 440;
+const r = 230;
+---
+
+<svg class="bust" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Portrait of Tung Tran">
+  <defs>
+    <radialGradient id="bust-disc" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" style="stop-color: var(--color-prussian)" />
+      <stop offset="100%" style="stop-color: var(--color-paper-3)" />
+    </radialGradient>
+    <radialGradient id="bust-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color: var(--color-accent-2); stop-opacity: 0.35" />
+      <stop offset="100%" style="stop-color: var(--color-accent-2); stop-opacity: 0" />
+    </radialGradient>
+    <clipPath id="bust-clip">
+      <circle cx={cx} cy={cy} r={r} />
+      <rect x={cx - 150} y="0" width="300" height={cy} />
+    </clipPath>
+  </defs>
+
+  <ellipse cx={cx} cy={cy - 120} rx="260" ry="220" fill="url(#bust-glow)" />
+  <circle class="bust__orbit" cx={cx} cy={cy} r={r + 62} />
+  <circle class="bust__ring" cx={cx} cy={cy} r={r + 26} />
+  <circle cx={cx} cy={cy} r={r} fill="url(#bust-disc)" />
+
+  <image
+    href="/img/portrait-cut.webp"
+    x="22"
+    y="70"
+    width="560"
+    height="730"
+    clip-path="url(#bust-clip)"
+    preserveAspectRatio="xMidYMin meet"
+  />
+
+  <g class="bust__planets">
+    <circle cx={cx - (r + 62) * Math.cos(Math.PI / 5)} cy={cy - (r + 62) * Math.sin(Math.PI / 5)} r="5" />
+    <text x={cx - (r + 62) * Math.cos(Math.PI / 5) - 14} y={cy - (r + 62) * Math.sin(Math.PI / 5) - 10} text-anchor="end">μ</text>
+    <circle cx={cx + (r + 62)} cy={cy + 40} r="4" />
+    <text x={cx + (r + 62) + 14} y={cy + 46}>σ</text>
+    <circle cx={cx - 120} cy={cy + Math.sqrt((r + 62) ** 2 - 120 ** 2)} r="3.5" />
+    <text x={cx - 134} y={cy + Math.sqrt((r + 62) ** 2 - 120 ** 2) + 24} text-anchor="end">ρ</text>
+  </g>
+</svg>
