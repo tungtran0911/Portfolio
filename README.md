@@ -51,14 +51,14 @@ Every number on the site comes from a repository:
   transcribed from the README of [Vn30-future_pred](https://github.com/tungtran0911/Vn30-future_pred).
   Update them when the study sample grows.
 
-## Deploy (GitHub Pages)
+## Deploy
 
-`.github/workflows/deploy.yml` builds and publishes on every push to `main`.
+Live on Vercel: https://portfolio-sigma-three-0m8n6ndkud.vercel.app (repo `tungtran0911/Portfolio`).
+Every push to `main` redeploys. If the domain changes, update `site` in `astro.config.mjs` so
+canonical links and the link-preview image point at the right place.
 
-1. Create a GitHub repo named `tungtran0911.github.io` and push this folder to `main`.
-2. Repo Settings → Pages → Source: **GitHub Actions**.
-3. The site goes live at `https://tungtran0911.github.io`. If you use another repo name or a
-   custom domain, change `site` in `astro.config.mjs` (and add `base` for a project page).
+`.github/workflows/deploy.yml` can publish to GitHub Pages instead, but only from a repo named
+`tungtran0911.github.io`: the site uses root-relative links and would break under `/Portfolio/`.
 
 ## Before publishing
 

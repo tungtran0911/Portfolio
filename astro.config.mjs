@@ -4,8 +4,8 @@ import mdx from '@astrojs/mdx';
 
 // https://astro.build/config
 export default defineConfig({
-  // GitHub Pages user site (repo named tungtran0911.github.io). Change if you deploy elsewhere.
-  site: 'https://tungtran0911.github.io',
+  // Deployed on Vercel. Used for canonical URLs and the link-preview image; change it if the domain changes.
+  site: 'https://portfolio-sigma-three-0m8n6ndkud.vercel.app',
   integrations: [tailwind(), mdx()],
   markdown: {
     shikiConfig: {
